@@ -3,12 +3,17 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Control of Thorlabs stages using the APT library
+// DESCRIPTION:   The example implementation of the demo camera.
+//                Simulates generic digital camera and associated automated
+//                microscope devices and enables testing of the rest of the
+//                system without the need to connect to the actual hardware. 
+//                
+// AUTHOR:        Brian Ashcroft, ashcroft@physics.leidenuniv.nl 03/14/2009
+// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //
-// COPYRIGHT:     Emilio J. Gualda, 2012
-//                Egor Zindy, University of Manchester, 2013
-//
+// COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
 //
 //                This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -17,122 +22,66 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// AUTHOR:        Emilio J. Gualda, IGC, 2012
-//                Egor Zindy (egor.zindy@manchester.ac.uk)
-//                Contributions and testing (TDC001): Alfie O'Neill / Christopher Blount
-//
 
-#ifndef _THORLABSDCSTAGE_H_
-#define _THORLABSDCSTAGE_H_
+
+#ifndef _DEMOCAMERA_H_
+#define _DEMOCAMERA_H_
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
-#include "APTAPI.h"
+#include "../../MMDevice/ImgBuffer.h"
 #include <string>
 #include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
-#define ERR_PORT_CHANGE_FORBIDDEN    10004
-#define ERR_UNRECOGNIZED_ANSWER      10009
-#define ERR_UNSPECIFIED_ERROR        10010
-#define ERR_HOME_REQUIRED            10011
-#define ERR_INVALID_PACKET_LENGTH    10012
-#define ERR_RESPONSE_TIMEOUT         10013
-#define ERR_BUSY                     10014
-#define ERR_STEPS_OUT_OF_RANGE       10015
-#define ERR_STAGE_NOT_ZEROED         10016
+//
+#define ERR_UNKNOWN_MODE         102
+#define ERR_UNKNOWN_POSITION     103
+
 
 //////////////////////////////////////////////////////////////////////////////
-// Global flag used for the initialisation of the APT subsystem.
-// Want to initialise only once for any number of stages
-// as initialisation takes time.
-//
-bool aptInitialized = false;
+// ThorlabsMFF class
+// Simulation of the filter changer (state device)
+//////////////////////////////////////////////////////////////////////////////
+template <class T>
+bool from_string(T& t, 
+                 const std::string& s, 
+                 std::ios_base& (*f)(std::ios_base&))
+{
+  std::istringstream iss(s);
+  return !(iss >> f >> t).fail();
+}
 
-class ThorlabsMFF : public CStageBase<ThorlabsMFF>
+
+class ThorlabsMFF : public CStateDeviceBase<ThorlabsMFF>
 {
 public:
-    ThorlabsMFF();
-    ThorlabsMFF(int hwType, std::string deviceName, long chNumber);
-    ~ThorlabsMFF();
+   ThorlabsMFF();
+   ~ThorlabsMFF();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
 
-    // Device API
-    // ----------
-    int Initialize();
-    int Shutdown();
-
-    void GetName(char* pszName) const;
-    bool Busy();
-
-    // Stage API
-    // ---------
-    int SetPositionUm(double posUm);
-    int SetPositionUmContinuous(double posUm);
-    int GetPositionUm(double& pos);
-    int SetPositionSteps(long steps);
-    int GetPositionSteps(long& steps);
-    int SetOrigin();
-    int GetLimits(double& min, double& max);
-    int SetLimits(double min, double max);
-
-    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-    bool IsContinuousFocusDrive() const {return false;}
-
-    // action interface
-    // ----------------
-    int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannelNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnMinPosUm(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnMaxPosUm(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnHome(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
+   long numPos_;
+   bool initialized_;
+   MM::MMTime changedTime_;
+   long position_;
+   std::string port_;
 
-//   bool GetValue(std::string& sMessage, double& pos);
-//   int SetMaxTravel();
-//   double GetTravelTimeMs(long steps);
-
-    void init(int hwType, std::string deviceName, long chNumber);
-    int SetPositionUmFlag(double posUm, int continuousFlag);
-    void LogInit();
-    void LogIt();
-    int Home();
-    int GetVelParam(double &vel);
-    int SetVelParam(double vel);
-
-    //Private variables
-    std::stringstream tmpMessage;
-    int hwType_;
-    std::string deviceName_;
-    long chNumber_;
-    long serialNumber_;
-    double stepSizeUm_;
-    bool initialized_;
-    bool busy_;
-    bool homed_;
-    double answerTimeoutMs_;
-    double minTravelUm_;
-    double maxTravelUm_;
-    float curPosUm_; // cached current position
-    float pfPosition;
-    float newPosition;
-    float newVel;
-    float pfMaxVel;
-    float pfMinVel;
-    float pfAccn;
-    float pfMaxAccn;
-    float pfMinPos;
-    float pfMaxPos;
-    long plUnits;
-    float pfPitch;
-
-    double home;
-
+   void InitializeMFF();
 };
 
-#endif //_THORLABSDCSTAGE_H_
+
+#endif //_DEMOCAMERA_H_
