@@ -17,6 +17,7 @@ public final class MMTags {
     */
    public final class Summary {
       public static final String PREFIX = "Prefix"; // Acquisition name
+      public static final String FOLPREFIX = "FolPrefix"; // Acquisition subdir
       public static final String DIRECTORY = "Directory"; // Acquisition directory
 
       public static final String WIDTH = "Width"; // image width
