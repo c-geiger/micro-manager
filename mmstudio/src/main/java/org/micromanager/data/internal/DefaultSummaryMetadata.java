@@ -89,6 +89,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
 
       private String prefix_ = null;
+      private String folprefix_ = null;
       private String userName_ = null;
       private String profileName_ = null;
       private String microManagerVersion_ = null;
@@ -121,6 +122,13 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          return this;
       }
 
+      
+      @Override
+      public SummaryMetadataBuilder folprefix(String folprefix) {
+         folprefix_ = folprefix;
+         return this;
+      }
+      
       @Override
       public SummaryMetadataBuilder userName(String userName) {
          userName_ = userName;
@@ -231,6 +239,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    }
    
    private String prefix_ = null;
+   private String folprefix_ = null;
    private String userName_ = null;
    private String profileName_ = null;
    private String microManagerVersion_ = null;
@@ -254,6 +263,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    public DefaultSummaryMetadata(Builder builder) {
       prefix_ = builder.prefix_;
+      folprefix_ = builder.folprefix_;
       userName_ = builder.userName_;
       profileName_ = builder.profileName_;
       microManagerVersion_ = builder.microManagerVersion_;
@@ -281,6 +291,13 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       return prefix_;
    }
 
+   @Override
+   public String getFolPrefix() {
+      return folprefix_;
+   }
+
+   
+  
    @Override
    public String getUserName() {
       return userName_;
@@ -384,6 +401,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    public SummaryMetadataBuilder copy() {
       return new Builder()
             .prefix(prefix_)
+            .folprefix(folprefix_)
             .userName(userName_)
             .profileName(profileName_)
             .microManagerVersion(microManagerVersion_)
@@ -426,6 +444,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {}
 
+      try {
+          builder.folprefix(tags.getString("Fol"));
+       }
+       catch (JSONException e) {}
+
+      
       try {
          builder.userName(tags.getString("UserName"));
       }
@@ -610,7 +634,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       else {
          // 1.4 did not have the field UserData but user data were interspersed
          // with other metadata.
-         String[] reservedNames = {"Prefix", "UserName", "ProfileName",
+         String[] reservedNames = {"Prefix", "FolPrefix" , "UserName", "ProfileName",
             "MicroManagerVersion", "MetadataVersion", "ComputerName",
             "Directory", "ChannelGroup", "ChNames", "WaitInterval",
             "Interval_ms", "CustomIntervals_ms", "AxisOrder",
@@ -647,6 +671,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          JSONObject result = new JSONObject();
          result.put("Prefix", prefix_);
+         result.put("FolPrefix", folprefix_);
          result.put("UserName", userName_);
          result.put("ProfileName", profileName_);
          result.put("MicroManagerVersion", microManagerVersion_);

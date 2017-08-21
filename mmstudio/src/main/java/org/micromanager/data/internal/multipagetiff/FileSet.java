@@ -148,7 +148,7 @@ class FileSet {
          //write index map here but still need to call close() at end of acq
          tiffWriters_.getLast().finish();          
 
-         currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
+         currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
@@ -257,7 +257,7 @@ class FileSet {
       if (prefix == null || prefix.length() == 0) {
          baseFilename = "MMStack";
       } else {
-         baseFilename = prefix + "_MMStack";
+         baseFilename = prefix;// + "_MMStack";
       }
 
       if (splitByXYPosition_) {

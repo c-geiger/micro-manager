@@ -341,7 +341,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.save = saveFiles_;
       if (saveFiles_) {
          acquisitionSettings.root = rootName_;
-         acquisitionSettings.prefix = dirName_;
+         acquisitionSettings.folprefix = dirName_;
       }
       acquisitionSettings.comment = comment_;
       acquisitionSettings.usePositionList = this.useMultiPosition_;
@@ -421,7 +421,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       saveFiles_ = ss.save;
       rootName_ = ss.root;
-      dirName_ = ss.prefix;
+      dirName_ = ss.folprefix;
       comment_ = ss.comment;
       
       useMultiPosition_ = ss.usePositionList;
