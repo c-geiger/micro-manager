@@ -445,7 +445,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       catch (JSONException e) {}
 
       try {
-          builder.folprefix(tags.getString("FolPrefix"));
+          builder.folprefix(tags.getString("Fol"));
        }
        catch (JSONException e) {}
 

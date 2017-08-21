@@ -127,19 +127,19 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // If we're in the middle of loading a file, then the code that writes
       // stuff to disk should not run; we only need to update our internal
       // records.
-      String positionFolPrefix = "";
+      String positionPrefix = "";
       if (isMultiPosition_ && image.getMetadata() != null &&
             image.getMetadata().getPositionName() != null) {
          // File is in a subdirectory.
-         positionFolPrefix = image.getMetadata().getPositionName() + "/";
+         positionPrefix = image.getMetadata().getPositionName() + "/";
       }
-      String fileName = positionFolPrefix + createFileName(image.getCoords());
+      String fileName = positionPrefix + createFileName(image.getCoords());
       if (amLoading_ && !(new File(dir_ + "/" + fileName).exists())) {
          // Try the 1.4 format instead. Since we may not have access to the
          // channel name property, we just have to arbitrarily assign an
          // ordering to the channel names that we find.
-         assignChannelsToIndices(positionFolPrefix);
-         fileName = positionFolPrefix + create14FileName(image.getCoords());
+         assignChannelsToIndices(positionPrefix);
+         fileName = positionPrefix + create14FileName(image.getCoords());
       }
       if (!amLoading_) {
          int imagePos = Math.max(0, image.getCoords().getStagePosition());
