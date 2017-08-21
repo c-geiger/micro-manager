@@ -117,8 +117,8 @@ public final class MMAcquisition {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
             try {
-               String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("FolPrefix"));
-               summaryMetadata.put("FolPrefix", acqDirectory);
+               String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+               summaryMetadata.put("Prefix", acqDirectory);
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
                store_.setStorage(getAppropriateStorage(store_, acqPath, true));
             } catch (Exception e) {
@@ -176,22 +176,22 @@ public final class MMAcquisition {
       DefaultEventManager.getInstance().registerForEvents(this);
   }
 
-   private String createAcqDirectory(String root, String folprefix) throws Exception {
+   private String createAcqDirectory(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
-      int curIndex = getCurrentMaxDirIndex(rootDir, folprefix + "_");
-      return folprefix + "_" + (1 + curIndex);
+      int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
+      return prefix + "_" + (1 + curIndex);
    }
 
-   private int getCurrentMaxDirIndex(File rootDir, String folprefix) throws NumberFormatException {
+   private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
       int maxNumber = 0;
       int number;
       String theName;
       for (File acqDir : rootDir.listFiles()) {
          theName = acqDir.getName();
-         if (theName.startsWith(folprefix)) {
+         if (theName.startsWith(prefix)) {
             try {
                //e.g.: "blah_32.ome.tiff"
-               Pattern p = Pattern.compile("\\Q" + folprefix + "\\E" + "(\\d+).*+");
+               Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
                Matcher m = p.matcher(theName);
                if (m.matches()) {
                   number = Integer.parseInt(m.group(1));

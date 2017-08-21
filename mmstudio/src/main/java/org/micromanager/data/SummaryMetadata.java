@@ -53,7 +53,6 @@ public interface SummaryMetadata {
       // SummaryMetadata. See the corresponding getter methods of
       // SummaryMetadata, below, for the meaning of these properties.
       SummaryMetadataBuilder prefix(String prefix);
-      SummaryMetadataBuilder folprefix(String folprefix);
       SummaryMetadataBuilder userName(String userName);
       SummaryMetadataBuilder profileName(String profileName);
 
@@ -92,12 +91,6 @@ public interface SummaryMetadata {
     * @return user-supplied portion of the filename.
     */
    public String getPrefix();
-   
-   /**
-    * user defined folder
-    * @return user-supplied portion of the foldername.
-    */
-   public String getFolPrefix();
 
    /**
     * The signed-in user of the machine that collected this data

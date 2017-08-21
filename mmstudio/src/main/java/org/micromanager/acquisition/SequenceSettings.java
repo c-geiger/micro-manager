@@ -105,10 +105,6 @@ public class SequenceSettings {
     */
    public String prefix = null;
    /**
-    * acquisitiondir name
-    */
-   public String folprefix = null;
-   /**
     * referent z position for relative moves
     */
    public double zReference = 0.0;
@@ -151,7 +147,6 @@ public class SequenceSettings {
       result.keepShutterOpenChannels = keepShutterOpenChannels;
       result.numFrames = numFrames;
       result.prefix = prefix;
-      result.folprefix = folprefix;
       result.relativeZSlice = relativeZSlice;
       result.root = root;
       result.save = save;
