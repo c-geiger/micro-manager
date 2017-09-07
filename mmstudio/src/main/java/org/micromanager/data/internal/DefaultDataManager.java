@@ -91,10 +91,10 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createMultipageTIFFDatastore(String directory,
-         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
+         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions, boolean WPSPath)
          throws IOException {
       DefaultDatastore result = new DefaultDatastore();
-      result.setStorage(new StorageMultipageTiff(result, directory, true,
+      result.setStorage(new StorageMultipageTiff(result, directory, true, WPSPath,
                shouldGenerateSeparateMetadata, shouldSplitPositions));
       return result;
    }
@@ -164,7 +164,7 @@ public final class DefaultDataManager implements DataManager {
       // StorageSinglePlaneTiffSeries.
       boolean isMultipageTiff = MultipageTiffReader.isMMMultipageTiff(directory);
       if (isMultipageTiff) {
-         result.setStorage(new StorageMultipageTiff(result, directory, false));
+         result.setStorage(new StorageMultipageTiff(result, directory, false, false));
       }
       else {
          result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,

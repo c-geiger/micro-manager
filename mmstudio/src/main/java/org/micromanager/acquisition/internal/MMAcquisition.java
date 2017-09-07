@@ -40,6 +40,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -103,9 +104,14 @@ public final class MMAcquisition {
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
+   private SequenceSettings settings;
+
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
          boolean diskCached, AcquisitionEngine eng, boolean show) {
+	   
+	   //FolderName folderName = new FolderName(summaryMetadata, studio.acquisitions().getAcquisitionSettings());
+	   
       studio_ = studio;
       name_ = name;
       virtual_ = diskCached;
@@ -113,17 +119,30 @@ public final class MMAcquisition {
       show_ = show;
       store_ = new DefaultDatastore();
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
+      this.settings = studio_.acquisitions().getAcquisitionSettings();
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
             try {
-               String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
-               summaryMetadata.put("Prefix", acqDirectory);
-               String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-               store_.setStorage(getAppropriateStorage(store_, acqPath, true));
+            	boolean W= true;
+            	if(W){
+        			
+        			
+        			
+            		String acqPath=settings.root;
+        			 
+        			store_.setStorage(getAppropriateStorage(store_, acqPath, true, true));
+            			
+            			}
+            		else{
+            			String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+            			summaryMetadata.put("Prefix", acqDirectory);
+            			String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
+            			store_.setStorage(getAppropriateStorage(store_, acqPath, true, false));
+            		}
             } catch (Exception e) {
-               ReportingUtils.showError(e, "Unable to create directory for saving images.");
-               eng.stop(true);
+            	ReportingUtils.showError(e, "Unable to create directory for saving images.");
+            	eng.stop(true);
             }
          } else {
             store_.setStorage(new StorageRAM(store_));
@@ -178,7 +197,7 @@ public final class MMAcquisition {
 
    private String createAcqDirectory(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
-      int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
+      int curIndex = getCurrentMaxDirIndex(rootDir, prefix+ "_");
       return prefix + "_" + (1 + curIndex);
    }
 
@@ -372,13 +391,14 @@ public final class MMAcquisition {
    }
 
    private static Storage getAppropriateStorage(DefaultDatastore store,
-         String path, boolean isNew) throws IOException {
+         String path, boolean isNew, boolean WPSPath) throws IOException {
       Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
+      
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          return new StorageSinglePlaneTiffSeries(store, path, isNew);
       }
       else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         return new StorageMultipageTiff(store, path, isNew);
+         return new StorageMultipageTiff(store, path, isNew, WPSPath);
       }
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);

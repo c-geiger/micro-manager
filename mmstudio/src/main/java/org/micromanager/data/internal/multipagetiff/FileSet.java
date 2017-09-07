@@ -30,6 +30,8 @@ import java.util.UUID;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.Studio;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -60,7 +62,14 @@ class FileSet {
    private StorageMultipageTiff masterStorage_;
    int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
+   
+   
+   
+   //new
+   private JSONObject summary_ = new JSONObject();
+   private Studio studio_;
 
+   private SequenceSettings settings;
    
    public FileSet(JSONObject firstImageTags, StorageMultipageTiff masterStorage,
          OMEMetadata omeMetadata,
@@ -69,14 +78,30 @@ class FileSet {
       tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
       masterStorage_ = masterStorage;
       omeMetadata_ = omeMetadata;
-      splitByXYPosition_ = splitByXYPosition;
+      splitByXYPosition_ = splitByXYPosition;;
       separateMetadataFile_ = separateMetadataFile;
-
+      this.settings = studio_.acquisitions().getAcquisitionSettings();
+      //FolderName folderName = new FolderName(summaryMetadata, studio.acquisitions().getAcquisitionSettings());
+    
+      
       //get file path and name
+      if (settings.WPSPath){
+    	  
+      baseFilename_ = settings.prefix;
+      currentTiffFilename_ = baseFilename_ + ".ome.tif";
+      currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
+   		}
+      else{
+    	  System.out.println("fil settings_wps"+ settings.WPSPath);
+          System.out.println("file settings root" + settings.root);
       baseFilename_ = createBaseFilename(firstImageTags);
       currentTiffFilename_ = baseFilename_ + ".ome.tif";
       currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
-      //make first writer
+      } 
+//      baseFilename_ = createBaseFilename(firstImageTags);
+//      currentTiffFilename_ = baseFilename_ + ".ome.tif";
+//      currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
+//      //make first writer
       tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
             firstImageTags, currentTiffFilename_));
 
@@ -148,7 +173,7 @@ class FileSet {
          //write index map here but still need to call close() at end of acq
          tiffWriters_.getLast().finish();          
 
-         currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
+         currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
@@ -257,7 +282,7 @@ class FileSet {
       if (prefix == null || prefix.length() == 0) {
          baseFilename = "MMStack";
       } else {
-         baseFilename = prefix + "_MMStack";
+         baseFilename = prefix ; //+ "_MMStack";
       }
 
       if (splitByXYPosition_) {
@@ -266,7 +291,7 @@ class FileSet {
                baseFilename += "_" + MDUtils.getPositionName(firstImageTags);
             }
             else {
-               baseFilename += "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
+              baseFilename = baseFilename + "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
             }
          } catch (JSONException ex) {
             ReportingUtils.showError("No position name or index in metadata");

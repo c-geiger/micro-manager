@@ -67,8 +67,16 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
+   private boolean useWPSPath=false;
+   
+   
+   
 
-   public AcquisitionWrapperEngine() {
+   public void setUseWPSPath(boolean useWPSPath) {
+	this.useWPSPath = useWPSPath;
+}
+
+public AcquisitionWrapperEngine() {
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
    }
