@@ -99,13 +99,12 @@ public interface DataManager {
     *        file will be generated.
     * @param shouldSplitPositions if true, then each stage position (per
     *        Coords.STAGE_POSITION) will be in a separate file.
-    * @param boolean WPSPath if true, then own filenam and foldercreation possible
     * @return an empty Datastore backed by disk in the form of one or more
     *         TIFF files each containing multiple image planes.
     * @throws IOException if any errors occur while opening files for writing.
     */
    public Datastore createMultipageTIFFDatastore(String directory,
-         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions, boolean WPSPath)
+         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
          throws IOException;
 
    /**

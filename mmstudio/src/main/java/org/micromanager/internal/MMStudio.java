@@ -121,7 +121,11 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
  */
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
-   private static final long serialVersionUID = 3556500289598574541L;
+   public static boolean USE_CUSTOM_PATH = false;
+   public static String CUSTOM_PATH_NAME = "F:\\";
+   public static String CUSTOM_FILE_NAME = "test";
+	
+	private static final long serialVersionUID = 3556500289598574541L;
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
@@ -131,7 +135,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
    private static final String AFFINE_TRANSFORM = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-
+   
+   
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components

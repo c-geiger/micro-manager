@@ -130,7 +130,6 @@ public class SequenceSettings {
     */
    public boolean shouldDisplayImages = true;
    
-   public boolean WPSPath = false;
 
    /**
     * Create a copy of this SequenceSettings. All parameters will be copied,
@@ -161,7 +160,6 @@ public class SequenceSettings {
       result.useCustomIntervals = useCustomIntervals;
       result.usePositionList = usePositionList;
       result.zReference = zReference;
-      result.WPSPath = WPSPath;
       return result;
    }
 

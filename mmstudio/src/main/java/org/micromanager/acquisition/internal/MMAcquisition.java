@@ -40,7 +40,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.Studio;
-import org.micromanager.acquisition.SequenceSettings;
+//import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -62,6 +62,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -104,98 +105,84 @@ public final class MMAcquisition {
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
-   private SequenceSettings settings;
+//   private SequenceSettings settings;
 
 
-   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
-         boolean diskCached, AcquisitionEngine eng, boolean show) {
-	   
-	   //FolderName folderName = new FolderName(summaryMetadata, studio.acquisitions().getAcquisitionSettings());
-	   
-      studio_ = studio;
-      name_ = name;
-      virtual_ = diskCached;
-      eng_ = eng;
-      show_ = show;
-      store_ = new DefaultDatastore();
-      pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
-      this.settings = studio_.acquisitions().getAcquisitionSettings();
-      try {
-         if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
-            // Set up saving to the target directory.
-            try {
-            	boolean W= true;
-            	if(W){
-        			
-        			
-        			
-            		String acqPath=settings.root;
-        			 
-        			store_.setStorage(getAppropriateStorage(store_, acqPath, true, true));
-            			
-            			}
-            		else{
-            			String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
-            			summaryMetadata.put("Prefix", acqDirectory);
-            			String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-            			store_.setStorage(getAppropriateStorage(store_, acqPath, true, false));
-            		}
-            } catch (Exception e) {
-            	ReportingUtils.showError(e, "Unable to create directory for saving images.");
-            	eng.stop(true);
-            }
-         } else {
-            store_.setStorage(new StorageRAM(store_));
-         }
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't adjust summary metadata.");
-      }
+	public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata, boolean diskCached,
+			AcquisitionEngine eng, boolean show) {
+		studio_ = studio;
+		name_ = name;
+		virtual_ = diskCached;
+		eng_ = eng;
+		show_ = show;
+		store_ = new DefaultDatastore();
+		pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
+		// this.settings = studio_.acquisitions().getAcquisitionSettings();
+		try {
+			String acqPath;
+			if (MMStudio.USE_CUSTOM_PATH) {
+				acqPath = MMStudio.CUSTOM_PATH_NAME;
+				store_.setStorage(getAppropriateStorage(store_, acqPath, true));
+			}
 
-      // Transfer any summary comment from the acquisition engine.
-      if (summaryMetadata != null && MDUtils.hasComments(summaryMetadata)) {
-         try {
-            CommentsHelper.setSummaryComment(store_,
-                  MDUtils.getComments(summaryMetadata));
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Unable to set summary comment");
-         }
-      }
+			else if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
+				// Set up saving to the target directory.
 
-      try {
-         pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
-      }
-      catch (DatastoreFrozenException e) {
-         ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
-      }
-      catch (DatastoreRewriteException e) {
-         ReportingUtils.logError(e, "Summary metadata has already been set");
-      }
-      catch (PipelineErrorException e) {
-         ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
-      }
-      // Calculate expected images from dimensionality in summary metadata.
-      if (store_.getSummaryMetadata().getIntendedDimensions() != null) {
-         Coords dims = store_.getSummaryMetadata().getIntendedDimensions();
-         imagesExpected_ = 1;
-         for (String axis : dims.getAxes()) {
-            imagesExpected_ *= dims.getIndex(axis);
-         }
-         setProgressText();
-      }
-      if (show_) {
-         display_ = studio_.displays().createDisplay(
-               store_, makeControlsFactory());
-         display_.registerForEvents(this);
-         alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
-         setProgressText();
-      }
-      store_.registerForEvents(this);
-      DefaultEventManager.getInstance().registerForEvents(this);
-  }
+				String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"),
+						summaryMetadata.getString("Prefix"));
+				summaryMetadata.put("Prefix", acqDirectory);
+				acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
 
-   private String createAcqDirectory(String root, String prefix) throws Exception {
+				store_.setStorage(getAppropriateStorage(store_, acqPath, true));
+			} else {
+				store_.setStorage(new StorageRAM(store_));
+			}
+		} catch (JSONException e) {
+			ReportingUtils.logError(e, "Couldn't adjust summary metadata.");
+
+		} catch (Exception e) {
+			ReportingUtils.showError(e, "Unable to create directory for saving images.");
+			eng.stop(true);
+		}
+
+		// Transfer any summary comment from the acquisition engine.
+		if (summaryMetadata != null && MDUtils.hasComments(summaryMetadata)) {
+			try {
+				CommentsHelper.setSummaryComment(store_, MDUtils.getComments(summaryMetadata));
+			} catch (JSONException e) {
+				ReportingUtils.logError(e, "Unable to set summary comment");
+			}
+		}
+
+		try {
+			pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+		} catch (DatastoreFrozenException e) {
+			ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
+		} catch (DatastoreRewriteException e) {
+			ReportingUtils.logError(e, "Summary metadata has already been set");
+		} catch (PipelineErrorException e) {
+			ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
+		}
+		// Calculate expected images from dimensionality in summary metadata.
+		if (store_.getSummaryMetadata().getIntendedDimensions() != null) {
+			Coords dims = store_.getSummaryMetadata().getIntendedDimensions();
+			imagesExpected_ = 1;
+			for (String axis : dims.getAxes()) {
+				imagesExpected_ *= dims.getIndex(axis);
+			}
+			setProgressText();
+		}
+		if (show_) {
+			display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
+			display_.registerForEvents(this);
+			alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
+			setProgressText();
+		}
+		store_.registerForEvents(this);
+		DefaultEventManager.getInstance().registerForEvents(this);
+	}
+
+   private String createAcqDirectory(String root, String prefix) throws Exception{
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix+ "_");
       return prefix + "_" + (1 + curIndex);
@@ -391,14 +378,14 @@ public final class MMAcquisition {
    }
 
    private static Storage getAppropriateStorage(DefaultDatastore store,
-         String path, boolean isNew, boolean WPSPath) throws IOException {
+         String path, boolean isNew) throws IOException {
       Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
       
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          return new StorageSinglePlaneTiffSeries(store, path, isNew);
       }
       else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         return new StorageMultipageTiff(store, path, isNew, WPSPath);
+         return new StorageMultipageTiff(store, path, isNew);
       }
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);

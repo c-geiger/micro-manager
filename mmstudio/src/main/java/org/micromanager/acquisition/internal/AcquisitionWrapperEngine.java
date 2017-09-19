@@ -72,10 +72,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    
    
 
-   public void setUseWPSPath(boolean useWPSPath) {
-	this.useWPSPath = useWPSPath;
-}
-
 public AcquisitionWrapperEngine() {
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();

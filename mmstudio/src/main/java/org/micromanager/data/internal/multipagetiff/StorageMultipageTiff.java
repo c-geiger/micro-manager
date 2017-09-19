@@ -102,9 +102,9 @@ public final class StorageMultipageTiff implements Storage {
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
   
-   public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode, boolean WPSPath)
+   public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode)
          throws IOException {
-      this(store, dir, amInWriteMode, WPSPath, getShouldGenerateMetadataFile(),
+      this(store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
             getShouldSplitPositions());
    }
    
@@ -113,7 +113,7 @@ public final class StorageMultipageTiff implements Storage {
     * independently of MM GUI
     */
    public StorageMultipageTiff(Datastore store, String dir,
-         boolean amInWriteMode, boolean WPSPath, boolean separateMDFile,
+         boolean amInWriteMode, boolean separateMDFile,
          boolean separateFilesForPositions) throws IOException {
       store_ = (DefaultDatastore) store;
       // We must be notified of changes in the Datastore before everyone else,
