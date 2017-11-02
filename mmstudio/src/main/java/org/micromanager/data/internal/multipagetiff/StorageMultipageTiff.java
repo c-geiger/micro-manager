@@ -52,6 +52,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
@@ -102,9 +103,9 @@ public final class StorageMultipageTiff implements Storage {
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
   
-   public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode)
+   public StorageMultipageTiff(Datastore store, String dir, boolean amInWriteMode)
          throws IOException {
-      this(store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
+      this(store, dir, amInWriteMode ,getShouldGenerateMetadataFile(),
             getShouldSplitPositions());
    }
    
@@ -133,14 +134,17 @@ public final class StorageMultipageTiff implements Storage {
          // it, so we can detect e.g. permissions errors that would cause
          // problems later.
          File dirFile = new File(directory_);
-         if (dirFile.exists()) {
-            // No overwriting existing datastores.
-            throw new IOException("Data at " + dirFile + " already exists");
-         }
-         dirFile.mkdirs();
-         if (!dirFile.canWrite()) {
-            throw new IOException("Insufficient permission to write to " + dirFile);
-         }
+         if (MMStudio.USE_CUSTOM_PATH==false){
+         	if (dirFile.exists()) {
+         		// No overwriting existing datastores.
+         		throw new IOException("Data at " + dirFile + " already exists");
+         	}
+         	dirFile.mkdirs();
+         }	
+         	if (!dirFile.canWrite()) {
+         		throw new IOException("Insufficient permission to write to " + dirFile);
+         	}
+      		
       }
       else {
          openExistingDataSet();

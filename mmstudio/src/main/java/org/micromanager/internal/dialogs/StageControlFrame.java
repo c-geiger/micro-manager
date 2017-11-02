@@ -20,6 +20,8 @@ package org.micromanager.internal.dialogs;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,6 +37,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -79,6 +83,7 @@ public final class StageControlFrame extends MMFrame {
    private JPanel zPanel_;
    private JComboBox zDriveSelect_;
    private JLabel zPositionLabel_;
+   private JTextField zPositionInput_;
    // Ordered small, medium, large.
    private JTextField[] xyStepTexts_ = new JTextField[] {
       new JTextField(), new JTextField(), new JTextField()
@@ -416,7 +421,28 @@ public final class StageControlFrame extends MMFrame {
             // Stick the Z position text in the middle.
             // HACK: As above HACK, this height matches the height of the
             // chevron buttons in the XY panel.
-            zPositionLabel_ = new JLabel("", JLabel.CENTER);
+        	 zPositionInput_ = new JTextField("", JTextField.CENTER);
+        	 zPositionInput_ .setBackground(Color.WHITE);
+        	 zPositionInput_ .setHorizontalAlignment(SwingConstants.CENTER);
+             result.add(zPositionInput_,
+                   "height 30!, width 100:, alignx center, growx");
+             zPositionInput_ .addActionListener(new ActionListener() {
+                 public void actionPerformed(java.awt.event.ActionEvent e) {
+                     
+                 	try {
+                 		core_.setPosition(currentZDrive_, Double.parseDouble(zPositionInput_ .getText()));
+                 		Thread.sleep(250);
+                 		setZPosLabel(core_.getPosition(currentZDrive_));
+                     	
+                     } catch (Exception e1) {
+                     	
+                     	e1.printStackTrace();
+                     }
+                 }
+             });
+             
+             
+        	 zPositionLabel_ = new JLabel("", JLabel.CENTER);
             result.add(zPositionLabel_,
                   "height 30!, width 100:, alignx center, growx");
          }
