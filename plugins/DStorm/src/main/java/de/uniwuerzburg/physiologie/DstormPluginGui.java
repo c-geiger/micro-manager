@@ -942,6 +942,13 @@ private Component verticalStrut_15;
 		panel_3.add(tfBigStep2);
 		
 		slider = new JSlider();
+		slider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				if (!slider.getValueIsAdjusting()) {
+				setZPos((double)slider.getValue());
+				}
+			}
+		});
 		slider.setToolTipText("");
 		slider.setPaintTicks(true);
 		slider.setPaintLabels(true);
@@ -2145,33 +2152,27 @@ public void setscanblack(){
 		}
 	}
 	
-	 public void stateChanged(ChangeEvent e) {
-	        JSlider slider = (JSlider)e.getSource();
-	        if (slider.getValueIsAdjusting()) {
-	            int tempPoszInt = (int)slider.getValue();
-	            tempPoszS=String.valueOf(tempPoszInt);
-	            
-	            
-	            try {
-					mmc.setSerialPortCommand("Port", "MOV Z "+ tempPoszS, "\n");
-					Thread.sleep(50);
-					mmc.setSerialPortCommand("Port", "POS? z", "\n");
-					tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-	            
-	            tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-	  			tempPoszS=String.valueOf(tempPosz);
-	  			valZPos.setText(tempPoszS );
-	            
-	        }
-	    }
-}
+	private void setZPos(double zPos) {
+		tempPoszS = String.valueOf(zPos);
+		try {
+			mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
+			Thread.sleep(50);
+			mmc.setSerialPortCommand("Port", "POS? z", "\n");
+			tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
+		tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
+		tempPoszS = String.valueOf(tempPosz);
+		valZPos.setText(tempPoszS);
+
+	}
+
+}
 
 
