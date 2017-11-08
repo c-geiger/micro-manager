@@ -127,6 +127,9 @@ public class FolderName {
 		if (this.channel == "channel1") {
 			this.imgDirName = getCustomacquisitiondirectory(root, prefix);
 			this.acqDirPath = root + File.separator + imgDirName + File.separator + this.imgDirName + "_" + channel;
+			
+			//accSettings.metadataPath = root + File.separator + filename + File.separator + filename + "_channel1" + File.separator + "Scan_" + filename+ File.separator + filename + ".ass"
+					
 			accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".ass"  ;
 			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".pos"  ;
 			File rootImg = createDirectory(acqDirPath);

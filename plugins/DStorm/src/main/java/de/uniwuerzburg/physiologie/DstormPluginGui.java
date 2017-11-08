@@ -56,6 +56,7 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.JSlider;
 import javax.swing.ImageIcon;
+import javax.swing.JToggleButton;
 
 public class DstormPluginGui extends JFrame {
 	private JLabel labFilesstem;
@@ -66,7 +67,7 @@ public class DstormPluginGui extends JFrame {
 	private JLabel labFramesPScanS;
 	private JLabel labScanSpeedS;
 	private JLabel labEmGainS;
-	private JLabel labStartDistS;
+	private JButton btnStartDistS;
 	private JLabel labStartPosS;
 	private JLabel valStartPosS;
 	private JLabel labEndPosS;
@@ -119,7 +120,7 @@ public class DstormPluginGui extends JFrame {
 	private JTextField tfEmGainCal;
 	private JTextField tfScanDepthCal;
 	private JTextField tfScanspeedS;
-	private JLabel tfStartPosS;
+	//private JLabel tfStartPosS;
 	private JLabel tfEndPosS;
 	private JTextField tfFramesPMicroS;
 	private JTextField tfExpEpi;
@@ -154,7 +155,13 @@ public class DstormPluginGui extends JFrame {
 	
 	
 	AccessorySequenceSettings accSettings = new AccessorySequenceSettings();
+	
+	
+	private AccessorySequenceSettings accSettingsChannel1;
+	
 	FolderName folderName = new FolderName(accSettings);
+	
+	
 	
 	
 	
@@ -193,7 +200,7 @@ private String beadsPosString = String.valueOf(doubleBeadsPos);
 private PluginEngine pluginengine;
 private SequenceSettings settings ;
 private JCheckBox chckbxSetCamsettingsIn;
-private Studio Studio;
+private Studio studio;
 private CMMCore mmc;
 
 private String tempPoszS;
@@ -203,6 +210,10 @@ private double distPosScan;
 private String newPoszS;
 private double newPosz;
 private double tempstepsize;
+private String channel1AssPath;
+private double epistartPosz;
+private String startDist;
+private double beadsstartPosz;
 
 //private AccessorySequenceSettings AccessorySequenceSettings;
 
@@ -241,6 +252,10 @@ private Component verticalStrut_12;
 private Component verticalStrut_13;
 private Component verticalStrut_14;
 private Component verticalStrut_15;
+private JToggleButton tglbtnNewToggleButton;
+private Component horizontalStrut;
+private boolean sliderChangeListenerActive = true;
+private Piezo piezo;
 
 	/**
 	 * Create the frame.
@@ -248,10 +263,10 @@ private Component verticalStrut_15;
 	 */
 
 
-	public DstormPluginGui( Studio app_) {
+	public DstormPluginGui( Studio app_, Piezo piezo) {
 		setTitle("dStorm Volume Recording V 1.0 2017");
-		this.Studio = app_;
-		mmc =Studio.getCMMCore();
+		this.studio = app_;
+		mmc =studio.getCMMCore();
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent arg0) {
@@ -259,27 +274,12 @@ private Component verticalStrut_15;
 			}
 		});
 		
-		this.Studio= app_;
+		this.studio= app_;
+		this.piezo =piezo;
+		this.pluginengine = new PluginEngine(app_, accSettings, folderName, piezo, this);
+		accSettings.channel= "channel1";
+		//PiezoRun2 piezorun2 = new PiezoRun2 (accSettings, app_, pluginengine);	
 		
-		this.pluginengine = new PluginEngine(app_, accSettings, folderName);
-		
-		PiezoRun2 piezorun2 = new PiezoRun2 (accSettings, app_, pluginengine);	
-		
-		try {
-			mmc.loadDevice("Port", "SerialManager", "COM10");
-		}
-
-		catch (Exception ex) {
-			System.out.println("load portdevice error ," + ex);
-			
-		}
-
-		try {
-			mmc.initializeDevice("Port");
-		} catch (Exception e1) {
-			System.out.println("initialize portdevice error ," + e1);
-			e1.printStackTrace();
-		}
 		
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -291,12 +291,17 @@ private Component verticalStrut_15;
 		JButton btnSaveSettings = new JButton("save settings");
 		btnSaveSettings.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				setaccSettings();
 				try {
 					JFileChooser fileChooser = new JFileChooser();
 					int returnVal = fileChooser.showSaveDialog(null);
 		            if (returnVal == JFileChooser.APPROVE_OPTION) {
 		                File file = fileChooser.getSelectedFile();
 		                String path = file.getPath();
+		                if(!path.endsWith(".ass")){
+		                path= path + ".ass";
+		                }
+		                
 		                accSettings.save(path);
 		                System.out.println("Saving: " + file.getName());
 		            } else {
@@ -329,7 +334,11 @@ private Component verticalStrut_15;
 	    		    File selectedFile = fileChooser.getSelectedFile();
 	    		    String path = selectedFile.getPath();
 	    		    
-	    		
+	    		    if (!path.endsWith(".ass")){
+		    			System.out.println("not a valid settings file" );
+		    			java.awt.Toolkit.getDefaultToolkit().beep();
+	    		    }
+	    		    else{
 	        	
 					
 					accSettings = AccessorySequenceSettings.load(path);
@@ -376,6 +385,7 @@ private Component verticalStrut_15;
 					tfStartDistS.setText(String.valueOf(accSettings.distTocoverslipS));
 					tfDistToCovEpi.setText(String.valueOf(accSettings.distanceToCoverslipEpi));
 				}
+	    		}
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -384,6 +394,41 @@ private Component verticalStrut_15;
 			}
 		});
 		menuBar.add(btnLoadSettings);
+		
+		horizontalStrut = Box.createHorizontalStrut(20);
+		menuBar.add(horizontalStrut);
+		
+		tglbtnNewToggleButton = new JToggleButton("Filter Off");
+		tglbtnNewToggleButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/rgb_red_blank.png")));
+		tglbtnNewToggleButton.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (tglbtnNewToggleButton.isSelected()){
+					tglbtnNewToggleButton.setText("Filter On");
+					tglbtnNewToggleButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/rgb_green_blank.png")));
+
+					try {
+						mmc.setState("ThorlabsMFF", 1);
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+
+				}
+				else{
+					tglbtnNewToggleButton.setText("Filter Off");
+					tglbtnNewToggleButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/rgb_red_blank.png")));
+					try {
+						mmc.setState("ThorlabsMFF", 0);
+					} catch (Exception e2) {
+						System.out.println("Error: Can't set state for ThorlabsMFF device.\n");
+						e2.printStackTrace();
+					}
+				}
+			}
+	
+		}); 
+		menuBar.add(tglbtnNewToggleButton);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -478,6 +523,7 @@ private Component verticalStrut_15;
 		        	}
 		        	
 		        	else{
+		        		
 		        		JFileChooser fileChooser = new JFileChooser();
 			    		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 			    		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -487,6 +533,36 @@ private Component verticalStrut_15;
 			    		    Path path = Paths.get(selectedFile.getPath());
 			    		    root = path.toString();
 			    		    Path filename = path.getFileName();
+			    		    String filenameS = filename.toString();
+			    		    
+			    		    try {
+								channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + "Scan_" + filenameS+ File.separator + filenameS + ".ass";
+								
+								AccessorySequenceSettings accSettingsChannel1 = AccessorySequenceSettings.load(channel1AssPath);
+								System.out.println("settings file loaded = "+ channel1AssPath );
+							} catch (Exception e1) {
+								System.out.println("could not load settings file");
+								java.awt.Toolkit.getDefaultToolkit().beep();
+								e1.printStackTrace();
+							}
+			    		    
+			    		    
+			    		    
+			    		    // get values from Channel 1 settings file
+			    		    accSettings.imageSizeS=accSettingsChannel1.imageSizeS;
+							tfImageSize.setText(String.valueOf(accSettings.imageSizeS));
+							accSettings.scanDepthS=accSettingsChannel1.scanDepthS;
+							tfScanDepthS.setText(String.valueOf(accSettings.scanDepthS));
+							accSettings.distTocoverslipS=accSettingsChannel1.distTocoverslipS;
+							tfStartDistS.setText(String.valueOf(accSettings.distTocoverslipS));
+							accSettings.distanceToCoverslipEpi=accSettingsChannel1.distanceToCoverslipEpi;
+							tfDistToCovEpi.setText(String.valueOf(accSettings.distanceToCoverslipEpi));
+							
+							
+			    		    
+			    		    
+			    		    
+			    		    accSettings.channel1AssPath=channel1AssPath;
 			    		    accSettings.prefix =filename.toString();
 			    		    tfFilestem.setText(filename.toString());
 			    		    File directory = fileChooser.getCurrentDirectory();
@@ -535,7 +611,7 @@ private Component verticalStrut_15;
 		        	prefix=tfFilestem.getText();
 		        	accSettings.prefix= prefix;
 		        	accSettings.root= root;
-		        	accSettings.channel = channel;
+		        	channel = accSettings.channel;
 		        	accSettings.WPSPath = true;
 		        	folderName.createImgDirectory (root, prefix, channel);
 		        	
@@ -597,7 +673,7 @@ private Component verticalStrut_15;
             		
             		if (rdbtnChannel_2.isSelected()){
             			accSettings.channel = "channel2";
-            			channel = "channel2";
+            			
             			
             			
             			tfStartDistS.setEditable(false);
@@ -623,7 +699,7 @@ private Component verticalStrut_15;
 				
 				tfImageSize = new JTextField();
 				tfImageSize.setBackground(Color.WHITE);
-				tfImageSize.setText("400");
+				tfImageSize.setText("512");
 				tfImageSize.setColumns(10);
 				CannelSelection.add(tfImageSize);
 				
@@ -694,18 +770,7 @@ private Component verticalStrut_15;
 		btnRefresh = new JButton("Refresh ");
 		btnRefresh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
-				try {
-					mmc.setSerialPortCommand("Port", "POS? z", "\n");
-					tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				} catch (Exception e1) {
-					System.out.println("can't obtain zPosition");
-					e1.printStackTrace();
-				}	 
-				
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-      			tempPoszS=String.valueOf(tempPosz);
-      			valZPos.setText(tempPoszS );
+				refreshGuiElements(piezo.getZPos(), btnRefresh);
 			}
 		});
 		panel_2.add(btnRefresh);
@@ -742,38 +807,22 @@ private Component verticalStrut_15;
 		
 		panel_3 = new JPanel();
 		panel_3.setLayout(new GridLayout(9, 0, 0, 0));
-		
+
 		btnUpBig = new JButton("");
 		btnUpBig.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-			try {
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-				System.out.println(tempPosz);
-				tempstepsize= Double.parseDouble(tfBigStep2.getText());
-				System.out.println(tempstepsize);
-				
-				newPosz = tempPosz + tempstepsize;
-				newPoszS =String.valueOf(newPosz);
-				
-				System.out.println("String"+ newPoszS);
-				
-				
-				mmc.setSerialPortCommand("Port", "MOV Z "+ newPoszS, "\n");
-				Thread.sleep(50);
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-			} catch (Exception e1) {
-				System.out.println("can't obtain zPosition");
-				e1.printStackTrace();
-			}	 
-			
-			tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-  			tempPoszS=String.valueOf(tempPosz);
-  			valZPos.setText(tempPoszS );
-				
+				try {
+					tempPosz = piezo.getZPos();
+					tempstepsize = Double.parseDouble(tfBigStep2.getText());
+					newPosz = tempPosz + tempstepsize;
+					tempPosz = piezo.setZPos(newPosz);
+				} catch (Exception e1) {
+					System.out.println("can't obtain zPosition");
+					e1.printStackTrace();
+				}
+				refreshGuiElements(tempPosz, btnUpBig);
 			}
+
 		});
 		
 		btnUpBig.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/stagecontrol/arrowhead-du.png")));
@@ -784,32 +833,15 @@ private Component verticalStrut_15;
 		btnUpSmall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			try {
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-				System.out.println(tempPosz);
+				tempPosz = piezo.getZPos();
 				tempstepsize= Double.parseDouble(tfSmallStep.getText());
-				System.out.println(tempstepsize);
-				
 				newPosz = tempPosz + tempstepsize;
-				newPoszS =String.valueOf(newPosz);
-				
-				System.out.println("String"+ newPoszS);
-				
-				
-				mmc.setSerialPortCommand("Port", "MOV Z "+ newPoszS, "\n");
-				Thread.sleep(50);
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
+				tempPosz = piezo.setZPos(newPosz);
 			} catch (Exception e1) {
 				System.out.println("can't obtain zPosition");
 				e1.printStackTrace();
 			}	 
-			
-			tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-  			tempPoszS=String.valueOf(tempPosz);
-  			valZPos.setText(tempPoszS );
-				
+			refreshGuiElements(tempPosz, btnUpSmall);
 			}
 		});
 		
@@ -820,25 +852,8 @@ private Component verticalStrut_15;
 		tfEnterZPos = new JTextField();
 		tfEnterZPos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				tempPoszS = tfEnterZPos.getText();
-				
-				try {
-				mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
-				
-				Thread.sleep(100);
-				
-				
-					mmc.setSerialPortCommand("Port", "POS? z", "\n");
-					tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				} catch (Exception e1) {
-					System.out.println("can't obtain zPosition");
-					e1.printStackTrace();
-				}	 
-				
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-      			tempPoszS=String.valueOf(tempPosz);
-      			valZPos.setText(tempPoszS );
-			
+				tempPosz = piezo.setZPos(Double.parseDouble(tfEnterZPos.getText()));
+				refreshGuiElements(tempPosz, tfEnterZPos);
 			}
 		});
 		tfEnterZPos.setBackground(Color.WHITE);
@@ -854,33 +869,18 @@ private Component verticalStrut_15;
 		btnDownSmall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					mmc.setSerialPortCommand("Port", "POS? z", "\n");
-					tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-					tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-					System.out.println(tempPosz);
+					tempPosz = piezo.getZPos();
 					tempstepsize= Double.parseDouble(tfSmallStep.getText());
-					System.out.println(tempstepsize);
-					
 					newPosz = tempPosz - tempstepsize;
-					newPoszS =String.valueOf(newPosz);
-					
-					System.out.println("String"+ newPoszS);
-					
-					
-					mmc.setSerialPortCommand("Port", "MOV Z "+ newPoszS, "\n");
-					Thread.sleep(50);
-					mmc.setSerialPortCommand("Port", "POS? z", "\n");
-					tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
+					tempPosz = piezo.setZPos(newPosz);
+					refreshGuiElements(tempPosz, btnDownSmall);
 				} catch (Exception e1) {
 					System.out.println("can't obtain zPosition");
 					e1.printStackTrace();
 				}	 
-				
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-      			tempPoszS=String.valueOf(tempPosz);
-      			valZPos.setText(tempPoszS );
-			}
-		});
+				//refreshGuiElements(tempPosz, btnDownSmall);
+				}
+			});
 		btnDownSmall.setSelectedIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/stagecontrol/arrowhead-sdp.png")));
 		btnDownSmall.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/stagecontrol/arrowhead-sd.png")));
 		panel_3.add(btnDownSmall);
@@ -888,33 +888,11 @@ private Component verticalStrut_15;
 		btnDownBig = new JButton("");
 		btnDownBig.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-			try {
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-				System.out.println(tempPosz);
-				tempstepsize= Double.parseDouble(tfBigStep2.getText());
-				System.out.println(tempstepsize);
-				
+				tempPosz = piezo.getZPos();
+				tempstepsize = Double.parseDouble(tfBigStep2.getText());
 				newPosz = tempPosz - tempstepsize;
-				newPoszS =String.valueOf(newPosz);
-				
-				System.out.println("String"+ newPoszS);
-				
-				
-				mmc.setSerialPortCommand("Port", "MOV Z "+ newPoszS, "\n");
-				Thread.sleep(50);
-				mmc.setSerialPortCommand("Port", "POS? z", "\n");
-				tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-			} catch (Exception e1) {
-				System.out.println("can't obtain zPosition");
-				e1.printStackTrace();
-			}	 
-			
-			tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-  			tempPoszS=String.valueOf(tempPosz);
-  			valZPos.setText(tempPoszS );
-				
+				tempPosz = piezo.setZPos(newPosz);
+				refreshGuiElements(tempPosz, btnDownBig);
 			}
 		});
 		
@@ -944,10 +922,12 @@ private Component verticalStrut_15;
 		slider = new JSlider();
 		slider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				if (!slider.getValueIsAdjusting()) {
-				setZPos((double)slider.getValue());
+				if (sliderChangeListenerActive) {
+					tempPosz = piezo.setZPos((double)slider.getValue());
+					refreshGuiElements(tempPosz, slider);
 				}
 			}
+
 		});
 		slider.setToolTipText("");
 		slider.setPaintTicks(true);
@@ -1024,19 +1004,23 @@ private Component verticalStrut_15;
 		        try { 	
 //		        	
 		        	if (accSettings.manuell==false){
-		        		pluginengine.setStandardCamProps();
-		        		Thread.sleep(5000);
+		        		//pluginengine.setStandardCamProps();
+		        		//Thread.sleep(5000);
 		        		labStorPathScan.setForeground(Color.BLACK);
 		        	}
+		        	accSettings.startPositionScan=accSettings.positionBeadsBefore-accSettings.distTocoverslipS;
+		        	piezo.setZPos(accSettings.startPositionScan);
+					labStartPosS.setText(String.valueOf(accSettings.startPositionScan));
+					accSettings.endPositionScan=accSettings.startPositionScan-accSettings.scanDepthS;
+					labEndPosS.setText(String.valueOf(accSettings.startPositionScan));
 		        	
-		        	/*
-		        	 * //write accsettings
+		        	 //write accsettings
 		        	 
 		        	accSettings.WPSPath = true;
 		        	accSettings.recordingParadigm = "Scan";
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expS = Double.parseDouble(tfExpScan.getText());
-		        	//accSettings.framesPScanS = Double.parseDouble(tfFramesPScanS.getText());
+		        	accSettings.framesPScanS = Double.parseDouble(tfFramesPScanS.getText());
 		        	accSettings.scanSpeedS = Double.parseDouble(tfScanspeedS.getText());
 		        	accSettings.emGainS = Integer.parseInt(tfEmGainS.getText());
 		        	accSettings.scanDepthS = Double.parseDouble(tfScanDepthS.getText());
@@ -1046,7 +1030,7 @@ private Component verticalStrut_15;
 		        	
 		        	
 		        	labStorPathScan.setText(folderName.createScanPath());
-		        	*/
+		        	
 		        	
 		        		
 		        		
@@ -1072,15 +1056,20 @@ private Component verticalStrut_15;
 		labStorPathScan = new JLabel();
 		panel_13.add(labStorPathScan);
 		
-		btnpiezorun = new JButton("piezorun");
+		btnpiezorun = new JButton("Clear Piezo");
 		btnpiezorun.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
+				try {
+					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+				} catch (Exception e1) {
+					System.out.println("piezo reseted");
+					e1.printStackTrace();
+				}
+				//pluginengine.piezorun2();
 				
-				pluginengine.piezorun2();
 				
-				
-			System.out.println ("testdruxck");}
+			}
 		});
 		panel_13.add(btnpiezorun);
 		
@@ -1089,9 +1078,15 @@ private Component verticalStrut_15;
 		btnStop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				accSettings.stopRecording=true;
+				try {
+					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				//piezorun2.stop();
 				
-			System.out.println ("testdruxck");}
+			System.out.println ("piezorun stopped");}
 		});
 		panel_13.add(btnStop);
 		
@@ -1151,7 +1146,7 @@ private Component verticalStrut_15;
             }
         });
 		
-		labScanSpeedS = new JLabel("Scanspeed");
+		labScanSpeedS = new JLabel("Scanspeed[nm/fr]");
 		panScanSet.add(labScanSpeedS);
 		
 		tfScanspeedS = new JTextField();
@@ -1194,8 +1189,21 @@ private Component verticalStrut_15;
 		panScanSet.add(tfEmGainS);
 		tfEmGainS.setColumns(10);
 		
-		labStartDistS = new JLabel("start distance to coverslip [\u00B5m]");
-		panScanSet.add(labStartDistS);
+		btnStartDistS = new JButton(" get start distance to coverslip [\u00B5m]");
+		btnStartDistS.addActionListener(new ActionListener() {
+			
+
+			public void actionPerformed(ActionEvent e) {
+				
+				tempPosz = piezo.round(piezo.getZPos());
+				
+				accSettings.distTocoverslipS =piezo.round(accSettings.positionBeadsBefore-tempPosz);
+				tfStartDistS.setText(String.valueOf(accSettings.distTocoverslipS));
+				
+				calculateStartEndPos();
+			}
+		});
+		panScanSet.add(btnStartDistS);
 		
 		tfStartDistS = new JTextField();
 		tfStartDistS.setBackground(Color.WHITE);
@@ -1207,16 +1215,7 @@ private Component verticalStrut_15;
 	          public void actionPerformed(java.awt.event.ActionEvent e) {
 	              try {
 	              	
-	              	double vartfScanDepthS = Double.parseDouble(tfScanDepthS .getText());
-	              	double vartfStartDistS = Double.parseDouble(tfStartDistS .getText());
-	             	double tempStartPosS = doubleBeadsPos - vartfStartDistS;
-	          		double tempEndPosS = tempStartPosS - vartfScanDepthS;
-	          		
-	          		valStartPosSString = String.valueOf(tempStartPosS);
-	          		valEndPosSString = String.valueOf(tempEndPosS);
-	          		
-	          		valStartPosS.setText(valStartPosSString);
-	          		valEndPosS.setText(valEndPosSString);
+	            	  calculateStartEndPos();
 	              
 	              	
 	              } catch (Exception e1) {
@@ -1225,13 +1224,14 @@ private Component verticalStrut_15;
 	          }
 	      });
 		
-		labStartPosS = new JLabel("start position (calculated)");
+		labStartPosS = new JLabel("start position");
 		panScanSet.add(labStartPosS);
 		
 	    valStartPosS = new JLabel();
+	    valStartPosS.setBackground(Color.WHITE);
 	    panScanSet.add(valStartPosS);
 		
-		labEndPosS = new JLabel("end position calculated");
+		labEndPosS = new JLabel("end position (calculated)");
 		panScanSet.add(labEndPosS);
 		
 		valEndPosS = new JLabel();
@@ -1253,17 +1253,9 @@ private Component verticalStrut_15;
 		
 		
 		//calculate start end pos
-		double vartfStartDistS = Double.parseDouble(tfStartDistS.getText());		
-		double vartfScanDepthS = Double.parseDouble(tfScanDepthS.getText());
-				double tempStartPosS = doubleBeadsPos - vartfStartDistS;
-				double tempEndPosS = tempStartPosS - vartfScanDepthS;
-				
-				valStartPosSString = String.valueOf(tempStartPosS);
-				valEndPosSString = String.valueOf(tempEndPosS);
-				
-				valStartPosS.setText(valStartPosSString);
-				valEndPosS.setText(valEndPosSString);
-				
+		
+		
+		
 		//abhängiges textfeld
 		tfScanDepthS.addActionListener(new ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -1280,17 +1272,17 @@ private Component verticalStrut_15;
                 	
                 	
                 	tfFramesPScanS.setText(tempFramesPScanSString);
-                	
+                	calculateStartEndPos();
                	// calculate start end position
-                	double vartfStartDistS = Double.parseDouble(tfStartDistS .getText());
-               		double tempStartPosS = doubleBeadsPos - vartfStartDistS;
-            		double tempEndPosS = tempStartPosS - vartfScanDepthS;
-            		
-            		valStartPosSString = String.valueOf(tempStartPosS);
-            		valEndPosSString = String.valueOf(tempEndPosS);
-            		
-            		valStartPosS.setText(valStartPosSString);
-            		valEndPosS.setText(valEndPosSString);
+//                	double vartfStartDistS = Double.parseDouble(tfStartDistS .getText());
+//               		double tempStartPosS = accSettings.startPositionScan - vartfStartDistS;
+//            		double tempEndPosS = tempStartPosS - vartfScanDepthS;
+//            		
+//            		valStartPosSString = String.valueOf(tempStartPosS);
+//            		valEndPosSString = String.valueOf(tempEndPosS);
+//            		
+//            		tfStartPosS.setText(valStartPosSString);
+//            		valEndPosS.setText(valEndPosSString);
                 
                 	
                 } catch (Exception e1) {
@@ -1378,13 +1370,8 @@ private Component verticalStrut_15;
 		        	
 		        	labStorPathBeadsBef.setText(folderName.createBeadsBeforePath());
 		        	labStorPathBeadsBef.setForeground(Color.BLACK);
-		        	
-		        	
-		        	mmc.setSerialPortCommand("Port", "POS? z", "\n");
-			        stringBeadsPos = mmc.getSerialPortAnswer("Port", "\n");	  
-			        stringBeadsPos = stringBeadsPos.substring(2);
-			        doubleBeadsPos=round(Double.parseDouble(stringBeadsPos));
-			        accSettings.positionBeadsBefore =doubleBeadsPos;	
+			        
+			        accSettings.positionBeadsBefore = piezo.getZPos();
 			        
 			        valStartPosBefore.setText(stringBeadsPos);
 	      			valStartAfter.setText(stringBeadsPos);
@@ -1428,11 +1415,7 @@ private Component verticalStrut_15;
 		        	labStorPathBeadsAf.setText(folderName.createBeadsAfterPath());
 		        	labStorPathBeadsAf.setForeground(Color.BLACK);
 		        	
-		        	mmc.setSerialPortCommand("Port", "POS? z", "\n");
-			        stringBeadsPos = mmc.getSerialPortAnswer("Port", "\n");	  
-			        stringBeadsPos = stringBeadsPos.substring(2);
-			        doubleBeadsPos=round(Double.parseDouble(stringBeadsPos));
-			        accSettings.positionBeadsAfter =doubleBeadsPos;	
+			        accSettings.positionBeadsAfter = piezo.getZPos();
 			        
 			        valStartPosBefore.setText(stringBeadsPos);
 	      			valStartAfter.setText(stringBeadsPos);
@@ -1494,6 +1477,23 @@ private Component verticalStrut_15;
 		
 		JButton buttonStartPosBefore = new JButton("get start position before");
 		panBeadsSet.add(buttonStartPosBefore);
+		buttonStartPosBefore.addActionListener(new ActionListener() {
+		    public void actionPerformed(java.awt.event.ActionEvent e) {
+		        try { 	
+		        	tempPosz=piezo.round(piezo.getZPos());
+		        	
+		        	tempPoszS = String.valueOf(tempPosz) ;
+		         
+		            accSettings.positionBeadsBefore =tempPosz;	
+		            valStartPosBefore.setText(tempPoszS);
+		            valStartPosBefore.setForeground(Color.BLACK);
+		            calculateStartEndPos();
+		        	
+		        } catch (Exception e1) {
+		        	e1.printStackTrace();
+		        }
+		    }
+		});
 		
 		valStartPosBefore = new JLabel(beadsPosString);
 		panBeadsSet.add(valStartPosBefore);
@@ -1505,10 +1505,11 @@ private Component verticalStrut_15;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	tempPosz = accSettings.positionBeadsBefore;
-		        	tempPoszS = String.valueOf(tempPosz) ;
-		            mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
-		            accSettings.positionBeadsBefore =tempPosz;	
+		        	tempPosz=piezo.setZPos(tempPosz);
+		        	valStartAfter.setText(String.valueOf(tempPosz));
 		        	valStartAfter.setForeground(Color.BLACK);
+		        	accSettings.positionBeadsAfter=tempPosz;
+		        	refreshGuiElements(tempPosz, buttonStartPosAfter);
 		        	
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
@@ -1522,13 +1523,7 @@ private Component verticalStrut_15;
 		buttonStartPosBefore.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
-		        
-		        
-		        mmc.setSerialPortCommand("Port", "POS? z", "\n");
-		        stringBeadsPos = mmc.getSerialPortAnswer("Port", "\n");	  
-		        stringBeadsPos = stringBeadsPos.substring(2);
-		        doubleBeadsPos=round(Double.parseDouble(stringBeadsPos));
-		        accSettings.positionBeadsBefore =doubleBeadsPos;	
+		        accSettings.positionBeadsBefore =piezo.getZPos();	
 		        
 		        valStartPosBefore.setText(stringBeadsPos);
       			valStartAfter.setText(stringBeadsPos);
@@ -1649,6 +1644,7 @@ private Component verticalStrut_15;
 		panel_5.add(labDistToCovEpi);
 		
 		tfDistToCovEpi = new JTextField();
+		tfDistToCovEpi.setBackground(Color.WHITE);
 		tfDistToCovEpi.setText("5");
 		panel_5.add(tfDistToCovEpi);
 		tfDistToCovEpi.setColumns(10);
@@ -1662,12 +1658,11 @@ private Component verticalStrut_15;
 	            	  
 	            tempPosz = accSettings.positionBeadsBefore;
 	            distPosEpi = Double.parseDouble(tfDistToCovEpi.getText());
-	            
-	            tempPoszS = String.valueOf(tempPosz + distPosEpi) ;
-	            mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
-	            
-      			valRecordingPositionEpi.setText(tempPoszS); 
+	            tempPosz=piezo.setZPos(tempPosz - distPosEpi);
+	            valRecordingPositionEpi.setText(String.valueOf(tempPosz)); 
       			accSettings.positionEpi=Double.parseDouble(tempPoszS);
+      			
+      			refreshGuiElements(tempPosz, btnsetFocusPosEpi);
 	              } catch (Exception e1) {
 	              	e1.printStackTrace();
 	              }
@@ -1682,16 +1677,12 @@ private Component verticalStrut_15;
 		btngetFreeFocusPosEpi.addActionListener(new ActionListener() {
 	          public void actionPerformed(java.awt.event.ActionEvent e) {
 	              try { 	
-	            	mmc.setSerialPortCommand("Port", "POS? z", "\n");
-	      			tempPoszS = mmc.getSerialPortAnswer("Port", "\n");	  
-	      			
-	      			tempPoszS = tempPoszS.substring(2);
-	      			tempPosz = round(Double.parseDouble(tempPoszS));
-	      			tempPoszS= String.valueOf(tempPosz);
-	      			valRecordingPositionEpi.setText(tempPoszS);
-	      			accSettings.positionEpi=Double.parseDouble(tempPoszS);
+	      			tempPosz = piezo.getZPos();
+	      			valRecordingPositionEpi.setText(String.valueOf(tempPosz));
+	      			accSettings.positionEpi = tempPosz;
 	              } catch (Exception e1) {
-	              	e1.printStackTrace();
+	              	
+	            	  e1.printStackTrace();
 	              }
 	          }
 	      });
@@ -1699,7 +1690,7 @@ private Component verticalStrut_15;
 		labEpirecordingposition = new JLabel("epi recording position");
 		panel_5.add(labEpirecordingposition);
 		
-		valRecordingPositionEpi = new JLabel("100");
+		valRecordingPositionEpi = new JLabel("xxx");
 		panel_5.add(valRecordingPositionEpi);
 		
 		JPanel Calibration_1 = new JPanel();
@@ -1999,23 +1990,10 @@ private Component verticalStrut_15;
 						valEndPosCal.setText(valEndPosCalString);
 						
 				//abhängiges textfeld
-				
-						
-					      
-				
-				
-				
-				
-				
-				
-				
-				
 	}
+	
+	
 
-	
-	
-	
-	
 	public String getPrefix() {
 		return prefix;
 	}
@@ -2103,21 +2081,21 @@ public void setscanblack(){
 
 	public void setaccSettings(){
 		accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
-		accSettings.expS = Integer.parseInt(tfExpScan.getText());
-		accSettings.framesPScanS=Integer.parseInt(tfFramesPScanS.getText());
-		accSettings.scanSpeedS=Integer.parseInt(tfScanspeedS.getText());
+		accSettings.expS = Double.parseDouble(tfExpScan.getText());
+		accSettings.framesPScanS=Double.parseDouble(tfFramesPScanS.getText());
+		accSettings.scanSpeedS=Double.parseDouble(tfScanspeedS.getText());
 		accSettings.emGainS= Integer.parseInt(tfEmGainS.getText());
 		accSettings.scanDepthS=Integer.parseInt(tfScanDepthS.getText());
 		accSettings.noScansS=  Integer.parseInt(tfNoScansS.getText());
-		accSettings.framesPMicroS=  Integer.parseInt(tfFramesPMicroS.getText());
-		accSettings.expBeads=  Integer.parseInt(tfExpBeads.getText());
+		accSettings.framesPMicroS=  Double.parseDouble(tfFramesPMicroS.getText());
+		accSettings.expBeads=  Double.parseDouble(tfExpBeads.getText());
 		accSettings.framesPScanBeads= Integer.parseInt (tfFramesPScanBeads.getText());
 		accSettings.emGainBeads=  Integer.parseInt(tfEmGainBeads.getText());
-		accSettings.expEpi= Integer.parseInt(tfExpEpi.getText());
+		accSettings.expEpi= Double.parseDouble(tfExpEpi.getText());
 		accSettings.emGainEpi=  Integer.parseInt(tfEmGainEpi.getText());
-		accSettings.expCal=  Integer.parseInt(tfExpCal.getText());
+		accSettings.expCal=  Double.parseDouble(tfExpCal.getText());
 		accSettings.framesPScanCal= Integer.parseInt (tfFramesPScanCal.getText());
-		accSettings.scanSpeedCal=  Integer.parseInt(tfScanspeedCal.getText());
+		accSettings.scanSpeedCal=  Double.parseDouble(tfScanspeedCal.getText());
 		accSettings.scanDepthCal= Integer.parseInt (tfScanDepthCal.getText());
 		accSettings.emGainCal=  Integer.parseInt(tfEmGainCal.getText());
 		accSettings.startPositionScan=  Double.parseDouble(valStartPosS.getText());
@@ -2127,51 +2105,43 @@ public void setscanblack(){
 		accSettings.positionEpi=  Double.parseDouble(valRecordingPositionEpi.getText());
 		accSettings.startPositionCalibration=  Double.parseDouble(valStartPosCal.getText());
 		accSettings.endPositionCalibration=  Double.parseDouble(valEndPosCal.getText());
-		accSettings.framesPmicroCal=  Integer.parseInt(tfFramesPMicroCal.getText());
+		accSettings.framesPmicroCal=  Double.parseDouble(tfFramesPMicroCal.getText());
 		accSettings.distTocoverslipS =Integer.parseInt(tfStartDistS.getText());
 		accSettings.distanceToCoverslipEpi=Integer.parseInt(tfDistToCovEpi.getText());
 	
 	}
 	
-	public double round(double number){
-		double	 	temprounded = number*100;
-					temprounded = Math.round(temprounded);
-			double	rounded = temprounded/100;
-		return rounded;
-	}
-//public void requestExit(){
-//	  exit = true;
-//	 }
-
-	private class SwingAction extends AbstractAction {
-		public SwingAction() {
-			putValue(NAME, "SwingAction");
-			putValue(SHORT_DESCRIPTION, "Some short description");
-		}
-		public void actionPerformed(ActionEvent e) {
-		}
-	}
+//	private class SwingAction extends AbstractAction {
+//		public SwingAction() {
+//			putValue(NAME, "SwingAction");
+//			putValue(SHORT_DESCRIPTION, "Some short description");
+//		}
+//		public void actionPerformed(ActionEvent e) {
+//		}
+//	}
 	
-	private void setZPos(double zPos) {
-		tempPoszS = String.valueOf(zPos);
-		try {
-			mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
-			Thread.sleep(50);
-			mmc.setSerialPortCommand("Port", "POS? z", "\n");
-			tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+
+	public void refreshGuiElements(double zPos, Object source) {
+		if(source != slider){
+			
+				sliderChangeListenerActive= false;
+				slider.setValue((int)zPos);
+				
+				sliderChangeListenerActive= true;
+
 		}
-
-		tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-		tempPoszS = String.valueOf(tempPosz);
-		valZPos.setText(tempPoszS);
-
+		valZPos.setText(String.valueOf(zPos));
 	}
+	public void calculateStartEndPos()	{	
+		
+		accSettings.scanDepthS=Double.parseDouble(tfScanDepthS .getText());;
+      	accSettings.distTocoverslipS=Double.parseDouble(tfStartDistS .getText());
+      	accSettings.startPositionScan= accSettings.positionBeadsBefore - accSettings.distTocoverslipS;
+  		accSettings.endPositionScan=accSettings.startPositionScan - accSettings.scanDepthS;
+  		
+  		valStartPosS.setText(String.valueOf(accSettings.startPositionScan));
+  		valEndPosS.setText(String.valueOf(accSettings.endPositionScan));
+		}
 
 }
 

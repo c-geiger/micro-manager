@@ -96,7 +96,7 @@ public class AccessorySequenceSettings {
 	/**
 	 * frame number per scan
 	 */
-	public int framesPScanS;
+	public double framesPScanS;
 	/**
 	 * Scanspeed Scan
 	 */
@@ -118,7 +118,7 @@ public class AccessorySequenceSettings {
 	/**
 	 * fframes per micrometer
 	 */
-	public int framesPMicroS;
+	public double framesPMicroS;
 
 	// attribute für beadsrecording
 	/**
@@ -236,8 +236,10 @@ public class AccessorySequenceSettings {
 	public double distanceToCoverslipEpi;
 	public double definedFocusPositionEpi;
 	public double freeFocuspositionEpi;
-	public int distTocoverslipS;
+	public double distTocoverslipS;
 	public String comments;
+	public String channel1AssPath;
+	
 	
 	/**
 	 * Create a copy of this SequenceSettings. All parameters will be copied,
@@ -333,7 +335,7 @@ public class AccessorySequenceSettings {
 		
 		result.stopRecording=stopRecording;
 		result.comments=comments;
-		
+		result.channel1AssPath=channel1AssPath;
 		
 		return result;
 	}

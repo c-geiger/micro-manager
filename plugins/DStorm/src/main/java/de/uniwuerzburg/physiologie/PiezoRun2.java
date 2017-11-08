@@ -31,12 +31,17 @@ public class PiezoRun2 implements Runnable {
 	private FolderName foldername;
 	private CMMCore mmc;
 	private PluginEngine pluginEngine;
+
+	private DstormPluginGui gui;
+
+	private int currentFrame;
 	
 
-	public PiezoRun2(AccessorySequenceSettings accSettings, Studio app_, PluginEngine pluginEngine) {
+	public PiezoRun2(AccessorySequenceSettings accSettings, Studio app_, PluginEngine pluginEngine, DstormPluginGui gui) {
 		this.accSettings = accSettings;
 		this.app_ = app_;
 		this.pluginEngine=pluginEngine;
+		this.gui=gui;
 		mmc = app_.getCMMCore();
 
 	}
@@ -61,7 +66,7 @@ public class PiezoRun2 implements Runnable {
 		}
 
 		
-		frames = accSettings.framesPScanS;
+		frames = (int)accSettings.framesPScanS;
 		scanDistance=accSettings.scanDepthS;
 		
 		upperStart=accSettings.startPositionScan;
@@ -82,7 +87,7 @@ public class PiezoRun2 implements Runnable {
 		String tempPosz;
 		
 		
-		int positionArrayLength = ((frames*scanNumber) / 10);
+		int positionArrayLength = ((frames/(5*20))*scanNumber*2);
 		String[][] positionarray =new String [positionArrayLength][3];
 		double tempposz;
 		String outputCycleIDoldS = null;
@@ -145,7 +150,8 @@ public class PiezoRun2 implements Runnable {
 			tempPosz = mmc.getSerialPortAnswer("Port", "\n");
 			System.out.println("Reached upper start position: ," + tempPosz);
 
-			
+			mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
+			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 
 			mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of completed output cycles
 															
@@ -173,21 +179,13 @@ public class PiezoRun2 implements Runnable {
 				mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 				System.out.println("ready for upscan");
 				mmc.setSerialPortCommand("Port", "WGO 1 258", "\n"); // Set wave generator start stop mode start next cycle at position of previous cycle
-									 
+				Thread.sleep(50);					 
 				pluginEngine.runDstormAcquisition();
 
 				
 				do {
 					if(accSettings.stopRecording){
-						try {
-							mmc.setSerialPortCommand("Port", "HLT", "\n");
-							mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
-							Thread.sleep(5000);
-							System.out.println("accSettings.stopRecording "+accSettings.stopRecording);
-						} catch (Exception e) {
-							System.out.println("Big problem with stop");
-							e.printStackTrace();
-						}
+						stop();
 						break scanloop;
 					}
 					
@@ -203,14 +201,20 @@ public class PiezoRun2 implements Runnable {
 						tempPosz = mmc.getSerialPortAnswer("Port", "\n");
 						mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
 						String wavepointS = mmc.getSerialPortAnswer("Port", "\n");
-						int currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
+						if (Integer.parseInt(wavepointS.substring(2))<20){
+							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
+						}
+						else{
+							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20);
+						}
 						System.out
-								.println("Upscan:" + scannumberindex + "Current frame:" + wavepointS +", current position: " + tempPosz); //put data in metadata
-						
-						positionarray [(frames*scannumberindex)+currentFrame][0]="upscan_"+scannumberindex;
-						positionarray [(frames*scannumberindex)+currentFrame][1]=String.valueOf(currentFrame);
-						positionarray [(frames*scannumberindex)+currentFrame][2]=String.valueOf(tempPosz);
-						
+								.println("Upscan :" + scannumberindex + ", Current frame: " + currentFrame +", current position: " + tempPosz); //put data in metadata
+						int arrayindex = 0;
+						positionarray [arrayindex][0]="upscan_"+scannumberindex;
+						positionarray [arrayindex][1]=String.valueOf(currentFrame);
+						positionarray [arrayindex][2]=String.valueOf(tempPosz);
+						arrayindex ++;
+						gui.refreshGuiElements(Double.parseDouble(tempPosz.substring(2)), null);
 						outputCycleIDoldS = outputCycleIDS;
 					}
 					
@@ -245,15 +249,7 @@ public class PiezoRun2 implements Runnable {
 				
 				do {
 					if(accSettings.stopRecording){
-						try {
-							mmc.setSerialPortCommand("Port", "HLT", "\n");
-							mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
-							Thread.sleep(5000);
-							System.out.println("accSettings.stopRecording "+accSettings.stopRecording);
-						} catch (Exception e) {
-							System.out.println("Big problem with stop");
-							e.printStackTrace();
-						}
+						stop();
 						break scanloop;
 					}
 					
@@ -269,14 +265,22 @@ public class PiezoRun2 implements Runnable {
 						tempPosz= mmc.getSerialPortAnswer("Port", "\n");
 						mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
 						String wavepointS = mmc.getSerialPortAnswer("Port", "\n");
-						int currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
+						if (Integer.parseInt(wavepointS.substring(2))<20){
+							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
+						}
+						else{
+							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20);
+						}
+						
 						System.out
-								.println("Upscan:" + scannumberindex + "Current frame:" + wavepointS +", current position: " + tempPosz); //put data in metadata
+								.println("Downscan:" + scannumberindex + "Current frame:" + currentFrame +", current position: " + tempPosz); //put data in metadata
 						
-						positionarray [(frames*scannumberindex+1)+currentFrame][0]="downscan_"+scannumberindex;
-						positionarray [(frames*scannumberindex+1)+currentFrame][1]=String.valueOf(currentFrame);
-						positionarray [(frames*scannumberindex+1)+currentFrame][2]=String.valueOf(tempPosz);
-						
+						int arrayindex = 0;
+						positionarray [arrayindex][0]="downscan_"+scannumberindex;
+						positionarray [arrayindex][1]=String.valueOf(currentFrame);
+						positionarray [arrayindex][2]=String.valueOf(tempPosz);
+						arrayindex ++;
+						gui.refreshGuiElements(Double.parseDouble(tempPosz.substring(2)), null);
 						outputCycleIDoldS = outputCycleIDS;
 					}
 					
@@ -293,6 +297,8 @@ public class PiezoRun2 implements Runnable {
 			}
 
 		} 
+		
+		
 		try {
 			ZPositionArrayWriter.save(positionarray, posPath);
 		} catch (IOException e) {
@@ -305,19 +311,15 @@ public class PiezoRun2 implements Runnable {
 	}
 
 	public void stop() {
-	 int i =1;
-	 do{
-		if(accSettings.stopRecording){
-			try {
-				mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
-				System.out.println("accSettings.stopRecording "+accSettings.stopRecording);
-			} catch (Exception e) {
-				System.out.println("Big problem with stop");
-				e.printStackTrace();
-			}
-			accSettings.stopRecording=false;
-			System.out.println("accSettings.stopRecording "+accSettings.stopRecording);
-		};
-	 }while (i==1);
+		try {
+			mmc.setSerialPortCommand("Port", "HLT", "\n");
+			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");
+			// TODO: Stop Aquisition
+			Thread.sleep(5000);
+		} catch (Exception e) {
+			System.out.println("Big problem with stop");
+			e.printStackTrace();
+		}
+		accSettings.stopRecording = false;
 	}
 }

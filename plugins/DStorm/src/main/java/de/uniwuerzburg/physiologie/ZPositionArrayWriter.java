@@ -17,13 +17,13 @@ public class ZPositionArrayWriter {
 			writer.write("frame , ");
 			writer.write("zPosition /n" );
 			int i =0;
-			for( i = 0; i < posArray.length; i++)
+			for( i = 0; i < posArray.length; i++){
 				
 					
 					writer.write(posArray[i][0] + ", ");
 					writer.write(posArray[i][1] + ", ");
 					writer.write(posArray[i][2]+"/n" );
-				
+			}
 			writer.close();
 		} finally {
 			if (writer != null) {

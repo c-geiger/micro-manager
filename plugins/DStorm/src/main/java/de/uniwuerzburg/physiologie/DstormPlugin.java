@@ -121,8 +121,9 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 			e.printStackTrace();
 		}
 		
+		Piezo piezo= new Piezo();
 		
-		DstormPluginGui frame = new DstormPluginGui(app_);
+		DstormPluginGui frame = new DstormPluginGui(app_,piezo);
 		
 		
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
