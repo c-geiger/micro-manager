@@ -1,8 +1,12 @@
 package de.uniwuerzburg.physiologie;
 
+import java.awt.Point;
+//import java.awt.Label;
 import java.io.IOException;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
@@ -20,6 +24,7 @@ public class PiezoRun2 implements Runnable {
 	final int segmentLength = 20;
 
 	// variables for GUI interaction
+	private int recordedOCFraction = 10;
 	private int frames;
 	double scanDistance;
 	private double upperStart;
@@ -31,17 +36,20 @@ public class PiezoRun2 implements Runnable {
 	private FolderName foldername;
 	private CMMCore mmc;
 	private PluginEngine pluginEngine;
-
+	private Piezo piezo;
 	private DstormPluginGui gui;
 
 	private int currentFrame;
+
+	private String scan;
 	
 
-	public PiezoRun2(AccessorySequenceSettings accSettings, Studio app_, PluginEngine pluginEngine, DstormPluginGui gui) {
+	public PiezoRun2(AccessorySequenceSettings accSettings, Studio app_, PluginEngine pluginEngine, DstormPluginGui gui, Piezo piezo) {
 		this.accSettings = accSettings;
 		this.app_ = app_;
 		this.pluginEngine=pluginEngine;
 		this.gui=gui;
+		this.piezo=piezo;
 		mmc = app_.getCMMCore();
 
 	}
@@ -49,6 +57,7 @@ public class PiezoRun2 implements Runnable {
 	public void run() {
 		// initialize Port
 		accSettings.stopRecording=false;
+		
 		try {
 			mmc.loadDevice("Port", "SerialManager", "COM10");
 		}
@@ -84,14 +93,14 @@ public class PiezoRun2 implements Runnable {
 		scanNumber=accSettings.noScansS;;
 		
 		String segmentLengthS = "20";
-		String tempPosz;
+		double tempPosz;
 		
 		
-		int positionArrayLength = ((frames/(5*20))*scanNumber*2);
+		int positionArrayLength = (((frames/(recordedOCFraction*20))+1)*scanNumber*2);
 		String[][] positionarray =new String [positionArrayLength][3];
 		double tempposz;
-		String outputCycleIDoldS = null;
-		String outputCycleIDS = null;
+		int outputCycleIDold = 0;
+		int outputCycleID = 0;
 		String assPath = accSettings.metadataPath;
 		String posPath = accSettings.positionarrayPath;
 		
@@ -146,79 +155,103 @@ public class PiezoRun2 implements Runnable {
 			String answer5 = mmc.getSerialPortAnswer("Port", "\n");
 			System.out.println("SD ," + answer5);
 
-			mmc.setSerialPortCommand("Port", "POS? z", "\n");
-			tempPosz = mmc.getSerialPortAnswer("Port", "\n");
+			
+			tempPosz = piezo.retrieveZPos();
 			System.out.println("Reached upper start position: ," + tempPosz);
 
 			mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
 			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 
-			mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of completed output cycles
+			
 															
-			outputCycleIDoldS = mmc.getSerialPortAnswer("Port", "\n");
-			System.out.println("completed output cycle number ," + outputCycleIDoldS);
+			outputCycleIDold = piezo.retrieveOutputcycleID();
+			System.out.println("completed output cycle number ," + outputCycleIDold);
 		} catch (Exception e) {
 			System.out.println("problem in getting piezo answers");
 			e.printStackTrace();
 		}
 		int scannumberindex = 0;
+		int arrayindex = 0;
 		scanloop :
 			for (scannumberindex = 0; scannumberindex < scanNumber; scannumberindex++) {
 			
 			try {
 				
 				// upscan
+				
+				scan= "upscan number: "+(scannumberindex+1);
+				outputCycleIDold=0;
 				mmc.setSerialPortCommand("Port", "WOS 1 " + upperStartS, "\n");
 				mmc.setSerialPortCommand("Port", "MOV Z " + upperStartS, "\n");
 				mmc.setSerialPortCommand("Port", "WAC ONT? Z = 1", "\n");
+				Thread.sleep(50);
+				tempPosz=piezo.retrieveZPos();
+				gui.refreshGuiElements(tempPosz, null);
+				System.out.println("reached upper starttpos");
 				mmc.setSerialPortCommand("Port",
 						"WAV 5 X LIN " + segmentLengthS + " -" + cycleDistanceS + " 0 " + segmentLengthS + " 0 0 ", "\n");
-				Thread.sleep(10000);
-				
+				waitTenSeconds(scan);
 				mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
 				mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 				System.out.println("ready for upscan");
 				mmc.setSerialPortCommand("Port", "WGO 1 258", "\n"); // Set wave generator start stop mode start next cycle at position of previous cycle
-				Thread.sleep(50);					 
-				pluginEngine.runDstormAcquisition();
-
+				Thread.sleep(100);					 
 				
+				
+				currentFrame=1;
+				positionarray [arrayindex][0]="upscan_"+scannumberindex;
+				positionarray [arrayindex][1]=String.valueOf(currentFrame);
+				positionarray [arrayindex][2]=String.valueOf(piezo.retrieveZPos());
+				arrayindex ++;
+				
+				pluginEngine.runDstormAcquisition();
+				
+				outputCycleID=piezo.retrieveOutputcycleID();
+				
+				upscanloop :
 				do {
+					
 					if(accSettings.stopRecording){
-						stop();
+						
 						break scanloop;
 					}
 					
-					//Thread.sleep(10);
-					mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of outputcycles
-																	
-					outputCycleIDS = mmc.getSerialPortAnswer("Port", "\n");
+					
+					
+					if (MMStudio.AcqError  && !app_.getAcquisitionManager().isAcquisitionRunning()){ //outputCycleID > outputCycles-2 &&
+						MMStudio.AcqError=false;
+						System.out.println("Acquisition error in upscan no_"+scannumberindex);
+						positionarray [arrayindex][0]="upscan_"+scannumberindex;
+						positionarray [arrayindex][1]=String.valueOf(piezo.retrieveFrameNumber());
+						positionarray [arrayindex][2]=String.valueOf(piezo.retrieveZPos());
+						arrayindex++;
+						mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
+						mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
+						mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
+						System.out.println("Piezo reset due to Acquisition error in upscan no_"+scannumberindex );
+						break upscanloop;
+					}
+					if (app_.getAcquisitionManager().isAcquisitionRunning()){
+						outputCycleID=piezo.retrieveOutputcycleID();
 
-					if (!outputCycleIDoldS.equals(outputCycleIDS)
-							&& (Integer.parseInt(outputCycleIDS.substring(2)) % 5 == 0)) {
+					if (!(outputCycleIDold >=outputCycleID)&& (outputCycleID % recordedOCFraction == 0)) {
 						
-						mmc.setSerialPortCommand("Port", "POS? Z", "\n");
-						tempPosz = mmc.getSerialPortAnswer("Port", "\n");
-						mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
-						String wavepointS = mmc.getSerialPortAnswer("Port", "\n");
-						if (Integer.parseInt(wavepointS.substring(2))<20){
-							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
-						}
-						else{
-							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20);
-						}
-						System.out
-								.println("Upscan :" + scannumberindex + ", Current frame: " + currentFrame +", current position: " + tempPosz); //put data in metadata
-						int arrayindex = 0;
+						
+						tempPosz = piezo.retrieveZPos();
+						
+						currentFrame=piezo.retrieveFrameNumber();
+						
 						positionarray [arrayindex][0]="upscan_"+scannumberindex;
 						positionarray [arrayindex][1]=String.valueOf(currentFrame);
 						positionarray [arrayindex][2]=String.valueOf(tempPosz);
 						arrayindex ++;
-						gui.refreshGuiElements(Double.parseDouble(tempPosz.substring(2)), null);
-						outputCycleIDoldS = outputCycleIDS;
+						System.out.println("aktual OCID "+outputCycleID);
+						gui.refreshGuiElements(tempPosz, null);
+						outputCycleIDold = outputCycleID;
+						Thread.sleep(50);
 					}
-					
-				} while ((Integer.parseInt(outputCycleIDS.substring(2))) < outputCycles);
+					}
+				} while (outputCycleID < outputCycles);
 			} catch (NumberFormatException e) {
 				System.out.println("problem with upscan number");
 				e.printStackTrace();
@@ -226,18 +259,24 @@ public class PiezoRun2 implements Runnable {
 				System.out.println("problem with upscan interrupts");
 				e.printStackTrace();
 			} catch (Exception e) {
-				System.out.println("problem with downscan ex");
+				System.out.println("problem with upscan ex");
 				e.printStackTrace();
 			}
 			
 		// downscan
 			try {
+				outputCycleIDold=0;
+				scan= "downscan number: "+(scannumberindex+1);
 				mmc.setSerialPortCommand("Port", "WOS 1 " + lowerStartS, "\n");
 				mmc.setSerialPortCommand("Port", "MOV Z " + lowerStartS, "\n");
 				mmc.setSerialPortCommand("Port", "WAC ONT? Z = 1", "\n");
+				Thread.sleep(50);
+				tempPosz=piezo.retrieveZPos();
+				gui.refreshGuiElements(tempPosz, null);
+				System.out.println("reached lower starttpos");
 				mmc.setSerialPortCommand("Port",
 						"WAV 5 X LIN " + segmentLengthS + " " + cycleDistanceS + " 0 " + segmentLengthS + " 0 0 ", "\n");
-				Thread.sleep(10000);
+				waitTenSeconds(scan);
 				mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
 				mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 				System.out.println("ready for downscan");
@@ -247,79 +286,129 @@ public class PiezoRun2 implements Runnable {
 				pluginEngine.runDstormAcquisition();
 				
 				
-				do {
-					if(accSettings.stopRecording){
-						stop();
-						break scanloop;
-					}
-					
-					
-					mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of completed output cycles
-																	
-					outputCycleIDS = mmc.getSerialPortAnswer("Port", "\n");
-
-					if (!outputCycleIDoldS.equals(outputCycleIDS)
-							&& (Integer.parseInt(outputCycleIDS.substring(2)) % 5 == 0)) {
+				currentFrame=1;
+				
+				positionarray [arrayindex][0]="downscan_"+scannumberindex;
+				positionarray [arrayindex][1]=String.valueOf(currentFrame);
+				positionarray [arrayindex][2]=String.valueOf(piezo.retrieveZPos());
+				arrayindex ++;
+				outputCycleID=piezo.retrieveOutputcycleID();
+				downscanloop:
+					do {
 						
-						mmc.setSerialPortCommand("Port", "POS? Z", "\n");
-						tempPosz= mmc.getSerialPortAnswer("Port", "\n");
-						mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
-						String wavepointS = mmc.getSerialPortAnswer("Port", "\n");
-						if (Integer.parseInt(wavepointS.substring(2))<20){
-							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20) +   (Integer.parseInt(wavepointS.substring(2)));
-						}
-						else{
-							currentFrame = (Integer.parseInt(outputCycleIDS.substring(2))*20);
+						if(accSettings.stopRecording){
+							break scanloop;
 						}
 						
-						System.out
-								.println("Downscan:" + scannumberindex + "Current frame:" + currentFrame +", current position: " + tempPosz); //put data in metadata
 						
-						int arrayindex = 0;
-						positionarray [arrayindex][0]="downscan_"+scannumberindex;
-						positionarray [arrayindex][1]=String.valueOf(currentFrame);
-						positionarray [arrayindex][2]=String.valueOf(tempPosz);
-						arrayindex ++;
-						gui.refreshGuiElements(Double.parseDouble(tempPosz.substring(2)), null);
-						outputCycleIDoldS = outputCycleIDS;
-					}
-					
-				} while ((Integer.parseInt(outputCycleIDS.substring(2))) < outputCycles);
-			} catch (NumberFormatException e) {
-				System.out.println("problem with downscan number");
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				System.out.println("problem with downscan interrupt");
-				e.printStackTrace();
-			} catch (Exception e) {
-				System.out.println("problem with downscan ex");
-				e.printStackTrace();
-			}
-
+						
+						
+						if (MMStudio.AcqError  && !app_.getAcquisitionManager().isAcquisitionRunning()){
+							MMStudio.AcqError=false;
+							System.out.println("Acquisition error in downscan no_"+scannumberindex);
+							positionarray [arrayindex][0]="downscan_"+scannumberindex;
+							positionarray [arrayindex][1]=String.valueOf(piezo.retrieveFrameNumber());
+							positionarray [arrayindex][2]=String.valueOf(piezo.retrieveZPos());
+							arrayindex++;
+							mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
+							mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
+							mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
+							System.out.println("Piezo reset due to Acquisition error in downscan no_"+scannumberindex );
+							break downscanloop;
+						}
+						
+						if (app_.getAcquisitionManager().isAcquisitionRunning()){
+							outputCycleID=piezo.retrieveOutputcycleID();
+							
+						if ((outputCycleIDold <outputCycleID)&& (outputCycleID % recordedOCFraction == 0)) {
+							
+							
+							tempPosz = piezo.retrieveZPos();
+							
+							currentFrame=piezo.retrieveFrameNumber();
+							
+							positionarray [arrayindex][0]="downscan_"+scannumberindex;
+							positionarray [arrayindex][1]=String.valueOf(currentFrame);
+							positionarray [arrayindex][2]=String.valueOf(tempPosz);
+							arrayindex ++;
+							System.out.println("aktual OCID "+outputCycleID);
+							gui.refreshGuiElements(tempPosz, null);
+							outputCycleIDold = outputCycleID;
+						}
+						}
+					} while (outputCycleID < outputCycles);
+				} catch (NumberFormatException e) {
+					System.out.println("problem with downscan number");
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					System.out.println("problem with downscan interrupts");
+					e.printStackTrace();
+				} catch (Exception e) {
+					System.out.println("problem with downscan ex");
+					e.printStackTrace();
+				}
+			
 		} 
 		
+		if(accSettings.stopRecording){
+			stopRecording();
+		}
 		
+		else{
 		try {
 			ZPositionArrayWriter.save(positionarray, posPath);
+			System.out.println("positionarray saving succesfull");
 		} catch (IOException e) {
 			System.out.println("writing positionarray failed");
 		}
 		
 		
 		System.out.println("super");
-		
+		try {
+			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");
+			System.out.println("piezo reset succesfull");
+		} catch (Exception e) {
+			System.out.println("piezo reset failed");
+			e.printStackTrace();
+		}
+		}
 	}
 
-	public void stop() {
+	private void waitTenSeconds(String string) throws InterruptedException {
+		WaitDialog waitDialog = new WaitDialog(string);
+		waitDialog.setLocation((int)gui.getLocationOnScreen().getX()+600,(int)gui.getLocationOnScreen().getY()+400);
+		waitDialog.setVisible(true);
+		int i=0;
+		for (i=0; i<10;i++){	
+		waitDialog.setWaitTimeLabel(10-i,string);
+		Thread.sleep(1000);
+		}
+		waitDialog.setVisible(false);
+		waitDialog.dispose();
+		waitDialog = null;
+	}
+
+	private void stopRecording(){
 		try {
+			
+			MMStudio.getInstance().getAcquisitionEngine().stop(true);
+			while(MMStudio.getInstance().getAcquisitionEngine().isAcquisitionRunning());
 			mmc.setSerialPortCommand("Port", "HLT", "\n");
-			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");
-			// TODO: Stop Aquisition
-			Thread.sleep(5000);
+			Thread.sleep(200);
+			mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+			
+			System.out.println("Acquisition interrupted by user");
+			accSettings.stopRecording=false;
 		} catch (Exception e) {
 			System.out.println("Big problem with stop");
 			e.printStackTrace();
 		}
 		accSettings.stopRecording = false;
 	}
-}
+	
+	
+	 
+
+	
+	
+	}

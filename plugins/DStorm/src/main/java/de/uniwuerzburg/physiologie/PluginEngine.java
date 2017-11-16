@@ -1,6 +1,7 @@
 package de.uniwuerzburg.physiologie;
 
 import java.awt.Color;
+import java.awt.Toolkit;
 
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
@@ -16,6 +17,9 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import java.io.File;
 
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 public class PluginEngine {
 
 	private Studio app_;
@@ -26,15 +30,19 @@ public class PluginEngine {
 	private PiezoRun2 piezorun2;
 	private CMMCore core;
 	private Piezo piezo;
+	private boolean enoughDiskspace;
+	private DstormPluginGui gui;
 	
 	
 	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui) {
 		this.app_ = app;
 		this.accSettings = accSettings;
 		this.folderName=folderName;
-		this.piezorun2 = new PiezoRun2(accSettings, app, this, gui);
 		this.piezo=piezo;
+		this.piezorun2 = new PiezoRun2(accSettings, app, this, gui, piezo);
+		settings=app_.acquisitions().getAcquisitionSettings();
 		core=app_.getCMMCore();
+		this.gui=gui;
 	}
 
 	public void runDstormAcquisition() {
@@ -65,7 +73,7 @@ public class PluginEngine {
 
 		//String zDevice = app_.getCMMCore().getFocusDevice();
 		
-		this.settings = app_.acquisitions().getAcquisitionSettings();
+		//this.settings = app_.acquisitions().getAcquisitionSettings();
 
 		settings.useCustomIntervals = false;
 		settings.intervalMs = 0;
@@ -76,50 +84,29 @@ public class PluginEngine {
 		System.out.println ("accsettings file "+ accSettings.scanFilename);
 		System.out.println ("accsettings path "+ accSettings.scanPathname);
 		
+		settings.cameraTimeout = 2000 ;
+		
 		settings.numFrames = (int)accSettings.framesPScanS;
+		System.out.println ("frames "+ settings.numFrames );
 		String camera = app_.getCMMCore().getCameraDevice();
 		int roi = accSettings.imageSizeS;
 		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);;
+		int roibordery = 256 -(roi/2);
 		try {
 			app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
+			System.out.println("could not set Roi");
 			e1.printStackTrace();
 		}
-		enoughDiskSpace(roi, roi, settings.numFrames);
+		
+		
 		
 
 		try {
 			
 			core.setExposure(accSettings.expS);
-			//System.out.println("2");
-//			Runnable runnable = new Runnable() {
-//				int count = 1;
-//
-//				public void run() {
-//					try {
-//						double zPosTemp = zPosStart + (count * movingstep);
-//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
-//						if (count % 100 == 0) {
-//							
-//								aktZPos = app_.getCMMCore().getPosition(zDevice);
-//							
-//							System.out.println(aktZPos);
-//						}
-//
-//						++count;
-//					} catch (Exception e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//				
-//			
-//			};
-			System.out.println("gorst");
-			//app_.getAcquisitionManager().attachRunnable(1, 0, 0, 0, runnable);
-
+		
+			
 			app_.acquisitions().runAcquisitionWithSettings(settings, false);
 			
 			final File metadatafile = new File(accSettings.metadataPath);
@@ -149,7 +136,7 @@ public class PluginEngine {
 		//String zDevice = app_.getCMMCore().getFocusDevice();
 
 		this.settings = app_.acquisitions().getAcquisitionSettings();
-
+		settings.save=false;
 		settings.useCustomIntervals = false;
 		settings.intervalMs = 0;
 		MMStudio.USE_CUSTOM_PATH=true;
@@ -169,7 +156,7 @@ public class PluginEngine {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		enoughDiskSpace(roi, roi, settings.numFrames);
+		//enoughDiskSpace(roi, roi, settings.numFrames);
 //		double dist = 1;
 //		double begin = 100;
 //		double tempPos = 0;
@@ -544,26 +531,66 @@ try {
 }
 }
 
+
 public void piezorun2() {
 	new Thread(piezorun2).start();
 	
 }
-
-	private boolean enoughDiskSpace(int roiX, int roiY, int numFrames) {
-		File root = new File(accSettings.root);
-		
-		// Need to find a file that exists to check space
-		while (!root.exists()) {
-			root = root.getParentFile();
-			if (root == null) {
-				return false;
-			}
+public boolean enoughDiskSpace(){
+	int numFrames=0;
+	if (accSettings.recordingParadigm.equals("Scan")){
+		numFrames= (int)accSettings.framesPScanS;
+	}
+	if (accSettings.recordingParadigm.equals("Beads")){
+		numFrames= (int)accSettings.framesPScanBeads;
+	}
+	if (accSettings.recordingParadigm.equals("Cal")){
+		numFrames= (int)accSettings.framesPScanCal;
+	}
+	int roiX = accSettings.imageSizeS;
+	int roiY= accSettings.imageSizeS;
+	
+	File root = new File(accSettings.root);
+	
+	// Need to find a file that exists to check space
+	while (!root.exists()) {
+		root = root.getParentFile();
+		if (root == null) {
+			return false;
 		}
+	}
+	
+	long usableMB = root.getUsableSpace() / (1024 * 1024);
+	long totalMB = roiX * roiY * app_.core().getBytesPerPixel() * numFrames / 1048576L;
+	
+	return (1.25 * totalMB) < usableMB;
+}
+
+//	private boolean enoughDiskSpace(int roiX, int roiY, int numFrames) {
+//		
+//		
+//		File root = new File(accSettings.root);
+//		
+//		// Need to find a file that exists to check space
+//		while (!root.exists()) {
+//			root = root.getParentFile();
+//			if (root == null) {
+//				return false;
+//			}
+//		}
+//		
+//		long usableMB = root.getUsableSpace() / (1024 * 1024);
+//		long totalMB = roiX * roiY * app_.core().getBytesPerPixel() * numFrames / 1048576L;
+//		
+//		return (1.25 * totalMB) < usableMB;
+//	}
+	
+	public void errorDialog(String message){
+		final Runnable runnable =
+			     (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation");
+			if (runnable != null) runnable.run();
 		
-		long usableMB = root.getUsableSpace() / (1024 * 1024);
-		long totalMB = roiX * roiY * app_.core().getBytesPerPixel() * numFrames / 1048576L;
-		
-		return (1.25 * totalMB) < usableMB;
+			JOptionPane.showMessageDialog(gui, message , "Dialog",JOptionPane.ERROR_MESSAGE);
 	}
 }
 

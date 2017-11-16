@@ -120,7 +120,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
  * tasks that should probably be refactored out at some point.
  */
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
-
+   public static boolean AcqError =false;
    public static boolean USE_CUSTOM_PATH = false;
    public static String CUSTOM_PATH_NAME = "F:\\";
    public static String CUSTOM_FILE_NAME = "test";
@@ -184,14 +184,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private StaticInfo staticInfo_;
-   
+
    
    /**
     * Main procedure for stand alone operation.
     * @param args
     */
    public static void main(String args[]) {
-      try {
+    
+	   try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
          MMStudio mmStudio = new MMStudio(false);
       } catch (ClassNotFoundException e) {

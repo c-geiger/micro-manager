@@ -57,6 +57,7 @@ import javax.swing.SwingConstants;
 import javax.swing.JSlider;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
+import java.awt.Dimension;
 
 public class DstormPluginGui extends JFrame {
 	private JLabel labFilesstem;
@@ -197,12 +198,12 @@ private double doubleBeadsPos;
 private String stringBeadsPos;
 private String beadsPosString = String.valueOf(doubleBeadsPos);
 
-private PluginEngine pluginengine;
+private PluginEngine pluginEngine;
 private SequenceSettings settings ;
 private JCheckBox chckbxSetCamsettingsIn;
 private Studio studio;
 private CMMCore mmc;
-
+private MMStudio MMStudio;
 private String tempPoszS;
 private double tempPosz;
 private double distPosEpi;
@@ -218,7 +219,7 @@ private double beadsstartPosz;
 //private AccessorySequenceSettings AccessorySequenceSettings;
 
 private Component verticalStrut_8;
-private JButton btnpiezorun;
+private JButton btnPiezoReset;
 private JButton btnStop;
 private JButton btnsetFocusPosEpi;
 private JTextField tfDistToCovEpi;
@@ -234,7 +235,6 @@ private JLabel lsbeEnterZPos;
 private JLabel labZPos;
 private Component verticalStrut_7;
 private Component verticalStrut_10;
-private Box verticalBox;
 private JLabel label_2;
 private JLabel labBigStep;
 private JPanel panel_3;
@@ -256,10 +256,18 @@ private JToggleButton tglbtnNewToggleButton;
 private Component horizontalStrut;
 private boolean sliderChangeListenerActive = true;
 private Piezo piezo;
+private JButton btnNewButton;
+private Component verticalStrut_16;
+private Component verticalStrut_17;
+private Component verticalStrut_18;
+private Component verticalStrut_19;
+private Component verticalStrut_20;
+private Component verticalStrut_21;
+private Component verticalStrut_22;
 
 	/**
 	 * Create the frame.
-	 * @param pluginengine 
+	 * @param pluginEngine 
 	 */
 
 
@@ -276,11 +284,11 @@ private Piezo piezo;
 		
 		this.studio= app_;
 		this.piezo =piezo;
-		this.pluginengine = new PluginEngine(app_, accSettings, folderName, piezo, this);
+		this.pluginEngine = new PluginEngine(app_, accSettings, folderName, piezo, this);
 		accSettings.channel= "channel1";
 		//PiezoRun2 piezorun2 = new PiezoRun2 (accSettings, app_, pluginengine);	
 		
-		
+		//settings=app_.acquisitions().getAcquisitionSettings();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1250, 800);
@@ -599,8 +607,35 @@ private Piezo piezo;
 		verticalStrut_15 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_15);
 		
+		verticalStrut_17 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_17);
+		
+		verticalStrut_16 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_16);
+		
+		verticalStrut_20 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_20);
+		
+		verticalStrut_19 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_19);
+		
+		verticalStrut_21 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_21);
+		
+		verticalStrut_18 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_18);
+		
 		verticalStrut_14 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_14);
+		
+		btnNewButton = new JButton("Close all images");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				app_.displays().closeAllDisplayWindows(false);
+			}
+		});
+		btnNewButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/close_windows.png")));
+		FileInput.add(btnNewButton);
 		
 		btnStartNewImage.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -737,14 +772,14 @@ private Piezo piezo;
 				verticalStrut_13 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_13);
 				
-				JPanel tfComments = new JPanel();
-				panel.add(tfComments);
-				tfComments.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Comments", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
-				tfComments.setLayout(new BoxLayout(tfComments, BoxLayout.X_AXIS));
+				JPanel panelComments = new JPanel();
+				panel.add(panelComments);
+				panelComments.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Comments", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+				panelComments.setLayout(new BoxLayout(panelComments, BoxLayout.X_AXIS));
 				
-				JTextPane textPane = new JTextPane();
-				textPane.setBackground(Color.WHITE);
-				tfComments.add(textPane);
+				JTextPane tpComments = new JTextPane();
+				tpComments.setBackground(Color.WHITE);
+				panelComments.add(tpComments);
 		//Piezosteuerung
 		piezoGui = new JPanel();
 		piezoGui.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.RAISED, null, null), "Piezo", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -770,7 +805,7 @@ private Piezo piezo;
 		btnRefresh = new JButton("Refresh ");
 		btnRefresh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				refreshGuiElements(piezo.getZPos(), btnRefresh);
+				refreshGuiElements(piezo.retrieveZPos(), btnRefresh);
 			}
 		});
 		panel_2.add(btnRefresh);
@@ -792,8 +827,23 @@ private Piezo piezo;
 		verticalStrut_10 = Box.createVerticalStrut(20);
 		panel_2.add(verticalStrut_10);
 		
-		verticalBox = Box.createVerticalBox();
-		panel_2.add(verticalBox);
+		btnPiezoReset = new JButton("RESET");
+		panel_2.add(btnPiezoReset);
+		btnPiezoReset.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				try {
+					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+					System.out.println("piezo reseted");
+				} catch (Exception e1) {
+					pluginEngine.errorDialog("error in piezo Reset");
+					e1.printStackTrace();
+				}
+				//pluginengine.piezorun2();
+				
+				
+			}
+		});
 		
 		label_2 = new JLabel("");
 		label_2.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")));
@@ -812,7 +862,7 @@ private Piezo piezo;
 		btnUpBig.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					tempPosz = piezo.getZPos();
+					tempPosz = piezo.retrieveZPos();
 					tempstepsize = Double.parseDouble(tfBigStep2.getText());
 					newPosz = tempPosz + tempstepsize;
 					tempPosz = piezo.setZPos(newPosz);
@@ -833,7 +883,7 @@ private Piezo piezo;
 		btnUpSmall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			try {
-				tempPosz = piezo.getZPos();
+				tempPosz = piezo.retrieveZPos();
 				tempstepsize= Double.parseDouble(tfSmallStep.getText());
 				newPosz = tempPosz + tempstepsize;
 				tempPosz = piezo.setZPos(newPosz);
@@ -869,7 +919,7 @@ private Piezo piezo;
 		btnDownSmall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					tempPosz = piezo.getZPos();
+					tempPosz = piezo.retrieveZPos();
 					tempstepsize= Double.parseDouble(tfSmallStep.getText());
 					newPosz = tempPosz - tempstepsize;
 					tempPosz = piezo.setZPos(newPosz);
@@ -888,7 +938,7 @@ private Piezo piezo;
 		btnDownBig = new JButton("");
 		btnDownBig.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				tempPosz = piezo.getZPos();
+				tempPosz = piezo.retrieveZPos();
 				tempstepsize = Double.parseDouble(tfBigStep2.getText());
 				newPosz = tempPosz - tempstepsize;
 				tempPosz = piezo.setZPos(newPosz);
@@ -1010,42 +1060,42 @@ private Piezo piezo;
 		        	}
 		        	accSettings.startPositionScan=accSettings.positionBeadsBefore-accSettings.distTocoverslipS;
 		        	piezo.setZPos(accSettings.startPositionScan);
-					labStartPosS.setText(String.valueOf(accSettings.startPositionScan));
+		        	Thread.sleep(200);
+					valStartPosS.setText(String.valueOf(accSettings.startPositionScan));
 					accSettings.endPositionScan=accSettings.startPositionScan-accSettings.scanDepthS;
-					labEndPosS.setText(String.valueOf(accSettings.startPositionScan));
+					valEndPosS.setText(String.valueOf(accSettings.endPositionScan));
 		        	
 		        	 //write accsettings
 		        	 
 		        	accSettings.WPSPath = true;
 		        	accSettings.recordingParadigm = "Scan";
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
+		        	accSettings.comments = tpComments.getText();
 		        	accSettings.expS = Double.parseDouble(tfExpScan.getText());
 		        	accSettings.framesPScanS = Double.parseDouble(tfFramesPScanS.getText());
 		        	accSettings.scanSpeedS = Double.parseDouble(tfScanspeedS.getText());
 		        	accSettings.emGainS = Integer.parseInt(tfEmGainS.getText());
 		        	accSettings.scanDepthS = Double.parseDouble(tfScanDepthS.getText());
 		        	accSettings.noScansS = Integer.parseInt(tfNoScansS.getText());
-		        	accSettings.framesPMicroS = Integer.parseInt(tfFramesPMicroS.getText());
-
-		        	
-		        	
+		        	accSettings.framesPMicroS = Double.parseDouble(tfFramesPMicroS.getText());
 		        	labStorPathScan.setText(folderName.createScanPath());
 		        	
-		        	
+		        	if (!pluginEngine.enoughDiskSpace()){
+		    			pluginEngine.errorDialog("Not enough Disk space");
+		    			return;	
+		    		}
 		        		
-		        		
+		        	else{	
 		        		Thread thread = new Thread() {
-						
-						@Override
+		        		@Override
 						public void run() {
-							pluginengine.piezorun2();
-				        	//pluginengine.runDstormAcquisition();
-				        	
-						}
-						
+							pluginEngine.piezorun2();
+							}
+		        		
 					};
-		        	thread.start();
-		        	
+//		        	thread.setPriority(Thread.MAX_PRIORITY);
+					thread.start();
+		        	}
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
 		        }
@@ -1056,38 +1106,17 @@ private Piezo piezo;
 		labStorPathScan = new JLabel();
 		panel_13.add(labStorPathScan);
 		
-		btnpiezorun = new JButton("Clear Piezo");
-		btnpiezorun.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-				try {
-					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
-				} catch (Exception e1) {
-					System.out.println("piezo reseted");
-					e1.printStackTrace();
-				}
-				//pluginengine.piezorun2();
-				
-				
-			}
-		});
-		panel_13.add(btnpiezorun);
-		
-		btnStop = new JButton("stop");
+		btnStop = new JButton("STOP ");
+		btnStop.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/stopklein.gif")));
 		
 		btnStop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				accSettings.stopRecording=true;
-				try {
-					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				//piezorun2.stop();
-				
-			System.out.println ("piezorun stopped");}
+				 }
 		});
+		
+		verticalStrut_22 = Box.createVerticalStrut(20);
+		panel_13.add(verticalStrut_22);
 		panel_13.add(btnStop);
 		
 		
@@ -1195,7 +1224,7 @@ private Piezo piezo;
 
 			public void actionPerformed(ActionEvent e) {
 				
-				tempPosz = piezo.round(piezo.getZPos());
+				tempPosz = piezo.round(piezo.retrieveZPos());
 				
 				accSettings.distTocoverslipS =piezo.round(accSettings.positionBeadsBefore-tempPosz);
 				tfStartDistS.setText(String.valueOf(accSettings.distTocoverslipS));
@@ -1367,25 +1396,32 @@ private Piezo piezo;
 		        	accSettings.expBeads = Double.parseDouble(tfExpBeads.getText());
 		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanBeads.getText());
 		        	accSettings.emGainBeads = Integer.parseInt(tfEmGainBeads.getText());
-		        	
+		        	accSettings.comments = tpComments.getText();
 		        	labStorPathBeadsBef.setText(folderName.createBeadsBeforePath());
 		        	labStorPathBeadsBef.setForeground(Color.BLACK);
 			        
-			        accSettings.positionBeadsBefore = piezo.getZPos();
+			        accSettings.positionBeadsBefore = piezo.retrieveZPos();
 			        
 			        valStartPosBefore.setText(stringBeadsPos);
 	      			valStartAfter.setText(stringBeadsPos);
 		        	valStartAfter.setForeground(Color.GREEN);
 		        	
+		        	if (!pluginEngine.enoughDiskSpace()){
+		    			pluginEngine.errorDialog("Not enough Disk space");
+		    			return;	
+		    		}
+
+		        	else{
 		        	Thread thread = new Thread(new Runnable() {
 						
 						@Override
 						public void run() {
-				        	pluginengine.runDstormBeforeBeadsAcquisition();
+				        	pluginEngine.runDstormBeforeBeadsAcquisition();
 							
 						}
 					});
 		        	thread.start();
+		        	}
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
 		        }
@@ -1410,28 +1446,34 @@ private Piezo piezo;
 		        	accSettings.expBeads = Double.parseDouble(tfExpScan.getText());
 		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanS.getText());
 		        	accSettings.emGainBeads = Integer.parseInt(tfEmGainS.getText());
-		        	
+		        	accSettings.comments = tpComments.getText();
 		        	
 		        	labStorPathBeadsAf.setText(folderName.createBeadsAfterPath());
 		        	labStorPathBeadsAf.setForeground(Color.BLACK);
 		        	
-			        accSettings.positionBeadsAfter = piezo.getZPos();
+			        accSettings.positionBeadsAfter = piezo.retrieveZPos();
 			        
 			        valStartPosBefore.setText(stringBeadsPos);
 	      			valStartAfter.setText(stringBeadsPos);
 		        	valStartAfter.setForeground(Color.GREEN);
 		        	
+		        	if (!pluginEngine.enoughDiskSpace()){
+		    			pluginEngine.errorDialog("Not enough Disk space");
+		    			return;	
+		    		}
+
+		        	else{
 		        	Thread thread = new Thread(new Runnable() {
 						
 						@Override
 						public void run() {
-				        	pluginengine.runDstormAfterBeadsAcquisition();
+				        	pluginEngine.runDstormAfterBeadsAcquisition();
 							
 						}
 					});
 		        	thread.start();
 		        	
-		        	
+		        	}
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
 		        }
@@ -1479,8 +1521,11 @@ private Piezo piezo;
 		panBeadsSet.add(buttonStartPosBefore);
 		buttonStartPosBefore.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
-		        try { 	
-		        	tempPosz=piezo.round(piezo.getZPos());
+		       System.out.println("double command");
+		    	try { 	
+		        	
+//		    		tempPosz=piezo.round(piezo.retrieveZPos());
+		    		tempPosz=piezo.round(50.0);
 		        	
 		        	tempPoszS = String.valueOf(tempPosz) ;
 		         
@@ -1523,7 +1568,7 @@ private Piezo piezo;
 		buttonStartPosBefore.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
-		        accSettings.positionBeadsBefore =piezo.getZPos();	
+		        accSettings.positionBeadsBefore =piezo.retrieveZPos();	
 		        
 		        valStartPosBefore.setText(stringBeadsPos);
       			valStartAfter.setText(stringBeadsPos);
@@ -1582,20 +1627,27 @@ private Piezo piezo;
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expEpi = Double.parseDouble(tfExpEpi.getText());		        	
 		        	accSettings.emGainEpi = Integer.parseInt(tfEmGainEpi.getText());
-		        	
+		        	accSettings.comments = tpComments.getText();
 		        	labStorPathEpi.setText(folderName.createEpiPath());
 		        	labStorPathEpi.setForeground(Color.BLACK);
 		        	
+		        	
+		        	if (!pluginEngine.enoughDiskSpace()){
+		    			pluginEngine.errorDialog("Not enough Disk space");
+		    			return;	
+		    		}
+
+		        	else{
 		        	Thread thread = new Thread(new Runnable() {
 						
 						@Override
 						public void run() {
-				        	pluginengine.runDstormEpiAcquisition();
+				        	pluginEngine.runDstormEpiAcquisition();
 							
 						}
 					});
 		        	thread.start();
-		        	
+		        	}
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
 		        }
@@ -1677,7 +1729,7 @@ private Piezo piezo;
 		btngetFreeFocusPosEpi.addActionListener(new ActionListener() {
 	          public void actionPerformed(java.awt.event.ActionEvent e) {
 	              try { 	
-	      			tempPosz = piezo.getZPos();
+	      			tempPosz = piezo.retrieveZPos();
 	      			valRecordingPositionEpi.setText(String.valueOf(tempPosz));
 	      			accSettings.positionEpi = tempPosz;
 	              } catch (Exception e1) {
@@ -1741,24 +1793,29 @@ private Piezo piezo;
 		        	accSettings.scanDepthCal = Double.parseDouble(tfScanDepthCal.getText());
 		        	
 		        	accSettings.framesPmicroCal = Double.parseDouble(tfFramesPMicroCal.getText());
-		        	
+		        	accSettings.comments = tpComments.getText();
 		        
 		        	
 		        	
 		        	
 		        	labStorPathCal.setText(folderName.createCalPath());
 		        	labStorPathCal.setForeground(Color.BLACK);	
-		        	
+		        	if (!pluginEngine.enoughDiskSpace()){
+		    			pluginEngine.errorDialog("Not enough Disk space");
+		    			return;	
+		    		}
+
+		        	else{
 		        		Thread thread = new Thread(new Runnable() {
 						
 						@Override
 						public void run() {
-				        	pluginengine.runDstormCalAcquisition();
+				        	pluginEngine.runDstormCalAcquisition();
 							
 						}
 					});
 		        	thread.start();
-		        	
+		        	}
 		        } catch (Exception e1) {
 		        	e1.printStackTrace();
 		        }
@@ -2142,7 +2199,9 @@ public void setscanblack(){
   		valStartPosS.setText(String.valueOf(accSettings.startPositionScan));
   		valEndPosS.setText(String.valueOf(accSettings.endPositionScan));
 		}
-
+public void StopRecording(boolean stop){
+	MMStudio.getAcquisitionEngine().stop(true);
+}
 }
 
 

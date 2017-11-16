@@ -74,7 +74,7 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 				
 
 			String trigger = arrayCamProps [43];	
-			core_.setProperty(camera, trigger, "Internal");
+			core_.setProperty(camera, trigger, "Software");
 
 			String CCDTemperatureSetPoint = arrayCamProps [8];
 			core_.setProperty(camera, CCDTemperatureSetPoint, "-80");

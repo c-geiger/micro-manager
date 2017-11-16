@@ -42,6 +42,7 @@ import org.micromanager.internal.MMStudio;
  */
 public final class ReportingUtils {
 
+
    /**
     * This class acts as a thin wrapper around ReportingUtils to present its
     * static methods in a non-static context, for use in the API.
@@ -276,7 +277,12 @@ public final class ReportingUtils {
    }
 
    public static void showError(Throwable e, String msg) {
-      showError(e, msg, MMStudio.getFrame());
+	   if(msg=="Acquisition failed."){ //&& MMStudio.USE_CUSTOM_PATH)
+		MMStudio.AcqError=true;  
+	   }
+	   else{
+      showError(e, msg, MMStudio.getFrame());}
+ 
    }
 
    public static void showError(Throwable e, Component parent) {

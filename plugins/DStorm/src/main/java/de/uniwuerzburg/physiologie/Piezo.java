@@ -50,7 +50,7 @@ public class Piezo {
 		return tempPosz;
 	}
 
-	public double getZPos(){
+	public double retrieveZPos(){
 		double tempPosz = 0;
 		try {
 			mmc.setSerialPortCommand("Port", "POS? z", "\n");
@@ -65,10 +65,43 @@ public class Piezo {
 	}
 	
 	public double round(double number){
-		double temprounded = number*10.0;
-		temprounded = Math.round(temprounded);
-		double	rounded = temprounded/10.0;
-		return rounded;
+//		double temprounded = number*10.0;
+//		temprounded = Math.round(temprounded);
+//		double	rounded = temprounded/10.0;
+		return number;//rounded;
 	}
-
+	
+	public int retrieveOutputcycleID(){
+		int outputCycleID=0;
+		try {
+			mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of completed output cycles
+			String answer = mmc.getSerialPortAnswer("Port", "\n");
+			outputCycleID = Integer.parseInt((answer).substring(2));
+		
+		} catch (Exception e) {
+			System.out.println("problem getting OCID");
+			e.printStackTrace();
+		}
+		return outputCycleID;
+	}
+	
+	public int retrieveFrameNumber(){
+		int wavepoint=0;
+		int currentFrame;
+		int outputCycleID=retrieveOutputcycleID();
+		try {
+			mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
+			wavepoint = Integer.parseInt((mmc.getSerialPortAnswer("Port", "\n")).substring(2));
+		} catch (Exception e) {
+			System.out.println("problem getting Framenumber");			e.printStackTrace();
+		}
+		
+		if (wavepoint<20){
+			currentFrame = (outputCycleID*20) + wavepoint  ;
+		}
+		else{
+			currentFrame = (outputCycleID*20);
+		}
+		return currentFrame;
+	}
 }

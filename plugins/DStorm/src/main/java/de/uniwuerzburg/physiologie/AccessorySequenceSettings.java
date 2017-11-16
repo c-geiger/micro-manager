@@ -55,7 +55,9 @@ public class AccessorySequenceSettings {
 	 * chosse recordimng paradigm
 	 */
 	public String recordingParadigm = "Scan"; // ("Before", "After", "Epi",
-												// "Cal");
+	
+	
+	// "Cal");
 	/**
 	 * force MM to custom acqpath
 	 */
