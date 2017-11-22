@@ -432,8 +432,9 @@ public final class StorageMultipageTiff implements Storage {
          for (FileSet p : positionToFileSet_.values()) {
             p.finishAbortedAcqIfNeeded();
          }
-
+        // if (!MMStudio.USE_CUSTOM_PATH){
          try {
+        	 
             //fill in missing tiffdata tags for OME meteadata--needed for
             //acquisitions in which z and t arent the same for every channel
             for (int p = 0; p <= lastAcquiredPosition_; p++) {
@@ -449,6 +450,7 @@ public final class StorageMultipageTiff implements Storage {
          }
 
          //figure out where the full string of OME metadata can be stored 
+        
          String fullOMEXMLMetadata = omeMetadata_.toString();
          int length = fullOMEXMLMetadata.length();
          String uuid = null, filename = null;
@@ -491,6 +493,8 @@ public final class StorageMultipageTiff implements Storage {
                progressBar.setProgress(count);
             }
          }
+      
+         
          //shut down writing executor--pause here until all tasks have finished
          //writing so that no attempt is made to close the dataset (and thus
          //the FileChannel) before everything has finished writing mkae sure

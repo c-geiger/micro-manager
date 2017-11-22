@@ -165,7 +165,6 @@ public class DstormPluginGui extends JFrame {
 	
 	
 	
-	
  
 	/**
 	 * Launch the application.
@@ -250,7 +249,6 @@ private JTextField tfBigStep2;
 private JSlider slider;
 private Component verticalStrut_12;
 private Component verticalStrut_13;
-private Component verticalStrut_14;
 private Component verticalStrut_15;
 private JToggleButton tglbtnNewToggleButton;
 private Component horizontalStrut;
@@ -259,11 +257,12 @@ private Piezo piezo;
 private JButton btnNewButton;
 private Component verticalStrut_16;
 private Component verticalStrut_17;
-private Component verticalStrut_18;
 private Component verticalStrut_19;
 private Component verticalStrut_20;
 private Component verticalStrut_21;
 private Component verticalStrut_22;
+private JButton btnStopLive;
+private JButton btnStartLive;
 
 	/**
 	 * Create the frame.
@@ -459,6 +458,7 @@ private Component verticalStrut_22;
 		FileInput.add(labFilesstem);
 		
 		tfFilestem = new JTextField();
+		tfFilestem.setText("test");
 		tfFilestem.setBackground(Color.WHITE);
 		FileInput.add(tfFilestem);
 		tfFilestem.setColumns(30);
@@ -481,6 +481,7 @@ private Component verticalStrut_22;
 		FileInput.add(labPathstem);
 		
 		tfPathstem = new JTextField();
+		tfPathstem.setText("F:\\debug");
 		tfPathstem.setBackground(Color.WHITE);
 		FileInput.add(tfPathstem);
 		tfPathstem.setColumns(30);
@@ -622,18 +623,24 @@ private Component verticalStrut_22;
 		verticalStrut_21 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_21);
 		
-		verticalStrut_18 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_18);
-		
-		verticalStrut_14 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_14);
-		
 		btnNewButton = new JButton("Close all images");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				app_.displays().closeAllDisplayWindows(false);
 			}
 		});
+		
+		btnStartLive = new JButton("Start Live");
+		btnStartLive.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Thread thread = new Thread(new SequenceRun(accSettings, folderName));
+				thread.start();
+			}
+		});
+		FileInput.add(btnStartLive);
+		
+		btnStopLive = new JButton("Stop Live");
+		FileInput.add(btnStopLive);
 		btnNewButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/close_windows.png")));
 		FileInput.add(btnNewButton);
 		

@@ -80,6 +80,7 @@ import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -195,9 +196,12 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
       DefaultEventManager.getInstance().post(
             new DefaultNewDisplayEvent(result));
       DefaultEventManager.getInstance().registerForEvents(result);
+      
+      if (!MMStudio.USE_CUSTOM_PATH){
       if (InspectorFrame.createFirstInspector()) {
          // The new inspector stole focus; retrieve it.
          result.toFront();
+      }
       }
       return result;
    }
