@@ -633,8 +633,20 @@ private JButton btnStartLive;
 		btnStartLive = new JButton("Start Live");
 		btnStartLive.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				Thread thread = new Thread(new SequenceRun(accSettings, folderName));
+				
+				Runnable run = new Runnable() {
+					
+					@Override
+					public void run() {
+						for (int i = 0; i < 10; i++) {
+							new SequenceRun(accSettings, folderName).run();
+						}
+						
+					}
+				};
+				Thread thread = new Thread(run);
 				thread.start();
+
 			}
 		});
 		FileInput.add(btnStartLive);
