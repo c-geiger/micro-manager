@@ -270,20 +270,21 @@ private JButton btnStartLive;
 	 */
 
 
-	public DstormPluginGui( Studio app_, Piezo piezo) {
+	public DstormPluginGui( Studio app_) {
 		setTitle("dStorm Volume Recording V 1.0 2017");
 		this.studio = app_;
 		mmc =studio.getCMMCore();
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent arg0) {
-				MMStudio.USE_CUSTOM_PATH=false;
+				org.micromanager.internal.MMStudio.USE_CUSTOM_PATH=false;
 			}
 		});
 		
 		this.studio= app_;
-		this.piezo =piezo;
-		this.pluginEngine = new PluginEngine(app_, accSettings, folderName, piezo, this);
+		PluginUtils pluginUtils= new PluginUtils(this);
+		this.piezo =new Piezo(accSettings, app_, this, pluginUtils);
+		this.pluginEngine = new PluginEngine(app_, accSettings, folderName, piezo, this, pluginUtils);
 		accSettings.channel= "channel1";
 		//PiezoRun2 piezorun2 = new PiezoRun2 (accSettings, app_, pluginengine);	
 		
@@ -631,24 +632,20 @@ private JButton btnStartLive;
 		});
 		
 		btnStartLive = new JButton("Start Live");
+
 		btnStartLive.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				
-				Runnable run = new Runnable() {
-					
+				new Thread(new Runnable() {
 					@Override
 					public void run() {
 						for (int i = 0; i < 10; i++) {
-							new SequenceRun(accSettings, folderName).run();
+							new SequenceRun(accSettings, folderName, pluginUtils).run();
 						}
-						
 					}
-				};
-				Thread thread = new Thread(run);
-				thread.start();
-
+				}).start();
 			}
 		});
+		
 		FileInput.add(btnStartLive);
 		
 		btnStopLive = new JButton("Stop Live");
@@ -666,7 +663,7 @@ private JButton btnStartLive;
 		        	accSettings.prefix= prefix;
 		        	accSettings.root= root;
 		        	channel = accSettings.channel;
-		        	accSettings.WPSPath = true;
+		        	
 		        	folderName.createImgDirectory (root, prefix, channel);
 		        	
 		        	setLabelsPreliminary();
@@ -762,18 +759,18 @@ private JButton btnStartLive;
 				chckbxSetCamsettingsIn.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 					
-					try {
-						if(chckbxSetCamsettingsIn.isSelected()){
-							accSettings.manuell = true;
-						}
-						else {
-							accSettings.manuell = false;
-						}
-					} catch (Exception e1) {
-						
+//					try {
+//						if(chckbxSetCamsettingsIn.isSelected()){
+//							accSettings.manuell = true;
+//						}
+//						else {
+//							accSettings.manuell = false;
+//						}
+//					} catch (Exception e1) {
+//						
+//					}
 					}
-					}
-				});
+			});
 				
 				
 				
@@ -855,7 +852,7 @@ private JButton btnStartLive;
 					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
 					System.out.println("piezo reseted");
 				} catch (Exception e1) {
-					pluginEngine.errorDialog("error in piezo Reset");
+					pluginUtils.errorDialog("error in piezo Reset");
 					e1.printStackTrace();
 				}
 				//pluginengine.piezorun2();
@@ -1072,11 +1069,10 @@ private JButton btnStartLive;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 //		        	
-		        	if (accSettings.manuell==false){
-		        		//pluginengine.setStandardCamProps();
-		        		//Thread.sleep(5000);
-		        		labStorPathScan.setForeground(Color.BLACK);
-		        	}
+		        	
+		        		
+		        	labStorPathScan.setForeground(Color.BLACK);
+		        	
 		        	accSettings.startPositionScan=accSettings.positionBeadsBefore-accSettings.distTocoverslipS;
 		        	piezo.setZPos(accSettings.startPositionScan);
 		        	Thread.sleep(200);
@@ -1086,7 +1082,7 @@ private JButton btnStartLive;
 		        	
 		        	 //write accsettings
 		        	 
-		        	accSettings.WPSPath = true;
+		        	
 		        	accSettings.recordingParadigm = "Scan";
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.comments = tpComments.getText();
@@ -1100,7 +1096,7 @@ private JButton btnStartLive;
 		        	labStorPathScan.setText(folderName.createScanPath());
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
-		    			pluginEngine.errorDialog("Not enough Disk space");
+		        		pluginUtils.errorDialog("Not enough Disk space");
 		    			return;	
 		    		}
 		        		
@@ -1410,7 +1406,7 @@ private JButton btnStartLive;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	accSettings.recordingParadigm = "Before";
-		        	accSettings.WPSPath = true;
+		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expBeads = Double.parseDouble(tfExpBeads.getText());
 		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanBeads.getText());
@@ -1426,7 +1422,7 @@ private JButton btnStartLive;
 		        	valStartAfter.setForeground(Color.GREEN);
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
-		    			pluginEngine.errorDialog("Not enough Disk space");
+		        		pluginUtils.errorDialog("Not enough Disk space");
 		    			return;	
 		    		}
 
@@ -1460,7 +1456,7 @@ private JButton btnStartLive;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	accSettings.recordingParadigm = "After";
-		        	accSettings.WPSPath = true;
+		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expBeads = Double.parseDouble(tfExpScan.getText());
 		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanS.getText());
@@ -1477,7 +1473,7 @@ private JButton btnStartLive;
 		        	valStartAfter.setForeground(Color.GREEN);
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
-		    			pluginEngine.errorDialog("Not enough Disk space");
+		        		pluginUtils.errorDialog("Not enough Disk space");
 		    			return;	
 		    		}
 
@@ -1642,7 +1638,7 @@ private JButton btnStartLive;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	accSettings.recordingParadigm = "After";
-		        	accSettings.WPSPath = true;
+		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expEpi = Double.parseDouble(tfExpEpi.getText());		        	
 		        	accSettings.emGainEpi = Integer.parseInt(tfEmGainEpi.getText());
@@ -1652,7 +1648,7 @@ private JButton btnStartLive;
 		        	
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
-		    			pluginEngine.errorDialog("Not enough Disk space");
+		        		pluginUtils.errorDialog("Not enough Disk space");
 		    			return;	
 		    		}
 
@@ -1820,7 +1816,7 @@ private JButton btnStartLive;
 		        	labStorPathCal.setText(folderName.createCalPath());
 		        	labStorPathCal.setForeground(Color.BLACK);	
 		        	if (!pluginEngine.enoughDiskSpace()){
-		    			pluginEngine.errorDialog("Not enough Disk space");
+		        		pluginUtils.errorDialog("Not enough Disk space");
 		    			return;	
 		    		}
 
@@ -2221,6 +2217,7 @@ public void setscanblack(){
 public void StopRecording(boolean stop){
 	MMStudio.getAcquisitionEngine().stop(true);
 }
+
 }
 
 

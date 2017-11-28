@@ -31,20 +31,28 @@ public class PluginEngine {
 	private CMMCore core;
 	private Piezo piezo;
 	private boolean enoughDiskspace;
-	private static DstormPluginGui gui;
+	private DstormPluginGui gui;
+	private PluginUtils pluginUtils;
+	private SequenceRun sequenceRun;
 	
-	
-	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui) {
+	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui, PluginUtils pluginUtils) {
 		this.app_ = app;
 		this.accSettings = accSettings;
 		this.folderName=folderName;
 		this.piezo=piezo;
-		this.piezorun2 = new PiezoRun2(accSettings, app, this, gui, piezo);
+		this.pluginUtils = pluginUtils;
+		this.sequenceRun = new SequenceRun (accSettings, folderName, pluginUtils);
+		this.piezorun2 = new PiezoRun2(accSettings, app, this, gui, piezo, pluginUtils);
 		settings=app_.acquisitions().getAcquisitionSettings();
 		core=app_.getCMMCore();
 		this.gui=gui;
 	}
 
+	
+	
+	
+	
+	
 	public void runDstormAcquisition() {
 		
 		
@@ -585,38 +593,37 @@ public boolean enoughDiskSpace(){
 //		return (1.25 * totalMB) < usableMB;
 //	}
 	
-	public static void errorDialog(String message){
-		final Runnable runnable =
-			     (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation");
-			if (runnable != null) runnable.run();
-		
-			JOptionPane.showMessageDialog(gui, message , "Dialog",JOptionPane.ERROR_MESSAGE);
-	}
-	
-	
-	
-	public void waitTenSeconds(String string) throws InterruptedException {
-		WaitDialog waitDialog = new WaitDialog(string);
-		waitDialog.setLocation((int)gui.getLocationOnScreen().getX()+600,(int)gui.getLocationOnScreen().getY()+400);
-		waitDialog.setVisible(true);
-		int i=0;
-		for (i=0; i<10;i++){	
-		waitDialog.setWaitTimeLabel(10-i,string);
-		Thread.sleep(1000);
-		}
-		waitDialog.setVisible(false);
-		waitDialog.dispose();
-		waitDialog = null;
-	}
+//	public static void errorDialog(String message){
+//		final Runnable runnable =
+//			     (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation");
+//			if (runnable != null) runnable.run();
+//		
+//			JOptionPane.showMessageDialog(gui, message , "Dialog",JOptionPane.ERROR_MESSAGE);
+//	}
+//	
+//	
+//	
+//	public void waitTenSeconds(String string) throws InterruptedException {
+//		WaitDialog waitDialog = new WaitDialog(string);
+//		waitDialog.setLocation((int)gui.getLocationOnScreen().getX()+600,(int)gui.getLocationOnScreen().getY()+400);
+//		waitDialog.setVisible(true);
+//		int i=0;
+//		for (i=0; i<10;i++){	
+//		waitDialog.setWaitTimeLabel(10-i,string);
+//		Thread.sleep(1000);
+//		}
+//		waitDialog.setVisible(false);
+//		waitDialog.dispose();
+//		waitDialog = null;
+//	}
 
 	public void stopRecording(){
 		try {
 			
-			MMStudio.getInstance().getAcquisitionEngine().stop(true);
-			while(MMStudio.getInstance().getAcquisitionEngine().isAcquisitionRunning());
+			sequenceRun.sequenceStop();
 			piezo.stopPiezo();
 			
-			System.out.println("Acquisition interrupted by user");
+			System.out.println("Sequencestopped by user");
 			accSettings.stopRecording=false;
 		} catch (Exception e) {
 			System.out.println("Big problem with stop");

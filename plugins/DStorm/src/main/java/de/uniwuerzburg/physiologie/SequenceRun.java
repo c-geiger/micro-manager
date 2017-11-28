@@ -2,7 +2,9 @@ package de.uniwuerzburg.physiologie;
 
 import java.io.File;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
@@ -20,25 +22,39 @@ public class SequenceRun implements Runnable {
 	private double exposureMs = 10;
 	private Datastore store = null;
 	String camera = null;
-	
-	public SequenceRun (AccessorySequenceSettings accSettings, FolderName folderName){
+	private SequenceSettings settings=app_.acquisitions().getAcquisitionSettings();
+	private int curFrame =0;
+	public int getCurFrame() {
+		return curFrame;
+	}
+
+	private PluginUtils pluginUtils;
+
+	public SequenceRun (AccessorySequenceSettings accSettings, FolderName folderName, PluginUtils pluginUtils){
 		this.accSettings=accSettings;
 		this.folderName=folderName;
-
+		this.pluginUtils=pluginUtils;
 
 		try{
 
+			settings.useCustomIntervals = false;
+			settings.intervalMs = 0;
+			
 			camera = core_.getCameraDevice();
-
-			core_.setExposure(16);
+			core_.setExposure(accSettings.expS);
 			exposureMs = core_.getExposure();
-			core_.setROI(0, 0 ,400,400);
+			int roi = accSettings.imageSizeS;
+			int roiBorderx = 256 -(roi/2);
+			int roiBordery = 256 -(roi/2);
+			core_.setROI(roiBorderx, roiBordery ,roi,roi);
+			
 			try {
 				folderName.createScanPath();
 			} catch (Exception e1) {
 				System.out.println ("filemaker error");
 				e1.printStackTrace();
 			}
+			StorageMultipageTiff.setShouldGenerateMetadataFile(false);
 			MMStudio.USE_CUSTOM_PATH=true;
 			MMStudio.CUSTOM_FILE_NAME = accSettings.scanFilename;
 			MMStudio.CUSTOM_PATH_NAME = accSettings.scanPathname;
@@ -76,8 +92,10 @@ public class SequenceRun implements Runnable {
 			// Set up a Coords.CoordsBuilder for applying coordinates to each
 			// image.
 			CoordsBuilder builder = app_.data().getCoordsBuilder().z(0).channel(0).stagePosition(0);
-			int curFrame = 0;
+			curFrame = 0;
 
+			
+			
 			while (core_.getRemainingImageCount() > 0 || core_.isSequenceRunning(camera)) {
 				if (core_.getRemainingImageCount() > 0) {
 					TaggedImage tagged = core_.popNextTaggedImage();
@@ -96,8 +114,6 @@ public class SequenceRun implements Runnable {
 
 				// Have Micro-Manager handle logic for ensuring data is saved to
 				// disk.
-				// app_.displays().manage(store);
-				// store.save(Datastore.SaveMode.MULTIPAGE_TIFF, "
 				core_.stopSequenceAcquisition();
 				Thread.sleep(100);
 
@@ -110,6 +126,24 @@ public class SequenceRun implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
-
+public void sequenceStop(){
+	try {
+		core_.stopSequenceAcquisition();
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	while(running());
+}
+	
+public boolean running(){
+	boolean running=false;
+	try {
+		running = core_.isSequenceRunning(camera);
+	} catch (Exception e) {
+		pluginUtils.errorDialog("error in setting waiting for device ");
+		e.printStackTrace();
+	}
+	return running;
+}
 }

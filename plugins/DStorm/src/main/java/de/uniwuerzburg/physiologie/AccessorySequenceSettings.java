@@ -58,10 +58,7 @@ public class AccessorySequenceSettings {
 	
 	
 	// "Cal");
-	/**
-	 * force MM to custom acqpath
-	 */
-	public boolean WPSPath = false;
+	
 	/**
 	 * froot directory
 	 */
@@ -171,7 +168,7 @@ public class AccessorySequenceSettings {
 	 */
 	public int emGainCal;
 	
-	public boolean manuell;
+	
 	
 	public double startPositionScan;
 	
@@ -252,9 +249,9 @@ public class AccessorySequenceSettings {
 	public AccessorySequenceSettings copy() {
 		AccessorySequenceSettings result = new AccessorySequenceSettings();
 		result.recordingParadigm = recordingParadigm;
-		result.WPSPath = WPSPath;
+		
 		result.uniqueimagepath = uniqueimagepath;
-		result.manuell = manuell;
+		
 		
 		result.root = root;
 		result.channel = channel;
@@ -380,6 +377,79 @@ public class AccessorySequenceSettings {
 	private static AccessorySequenceSettings fromJSONStream(String stream) {
 		Gson gson = new Gson();
 		return gson.fromJson(stream, AccessorySequenceSettings.class);
+	}
+	
+	public void clearAccSettings(){
+		recordingParadigm = null;
+		
+		uniqueimagepath = uniqueimagepath;
+		
+		
+		root = root;
+		channel = channel;
+		prefix = prefix;
+		parRoot = parRoot;
+		channel2Selected = channel2Selected;	
+		imageSizeS = imageSizeS;
+
+		expS = expS;
+		framesPScanS = framesPScanS;
+		scanSpeedS = scanSpeedS;
+		emGainS = emGainS;
+		scanDepthS = scanDepthS;
+		noScansS = noScansS;
+		framesPMicroS = framesPMicroS;
+		startPositionScan = startPositionScan;
+		endPositionScan = endPositionScan;
+		
+
+		expBeads = expBeads;
+		framesPScanBeads = framesPScanBeads;
+		emGainBeads = emGainBeads;
+		positionBeadsBefore =positionBeadsBefore;
+		positionBeadsAfter = positionBeadsAfter;
+		
+		expEpi = expEpi;
+		emGainEpi = emGainEpi;
+		positionEpi = positionEpi;
+		
+		
+		expCal = expCal;
+		framesPScanCal = framesPScanCal;
+		scanSpeedCal = scanSpeedCal;
+		emGainCal = emGainCal;
+		scanDepthCal = scanDepthCal;
+		framesPmicroCal= framesPmicroCal;
+		startPositionCalibration = startPositionCalibration;
+		endPositionCalibration = endPositionCalibration;
+
+		
+		scanFilename = scanFilename;
+		scanPathname = scanPathname;
+		epiFilename =epiFilename;
+		epiPathname = epiPathname;
+		calFilename = calFilename;
+		calPathname = calPathname;
+		beadsBeforeFilename = beadsBeforeFilename;
+		beadsAfterFilename = beadsAfterFilename;
+		beadsPathname = beadsPathname;
+		accSettingsFilename = accSettingsFilename;
+		metadataFilename = metadataFilename ;
+		metadataPath = metadataPath ;
+
+		
+		metadataPath=metadataPath;
+		positionarrayPath=positionarrayPath;
+		
+		
+		distanceToCoverslipEpi = distanceToCoverslipEpi;
+		definedFocusPositionEpi=definedFocusPositionEpi;
+		freeFocuspositionEpi=freeFocuspositionEpi;
+		distTocoverslipS = distTocoverslipS;
+		
+		stopRecording=stopRecording;
+		comments=comments;
+		channel1AssPath=channel1AssPath;	
 	}
 
 }

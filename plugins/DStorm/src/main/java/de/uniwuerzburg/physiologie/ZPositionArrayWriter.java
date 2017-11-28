@@ -22,7 +22,8 @@ public class ZPositionArrayWriter {
 					
 					writer.write(posArray[i][0] + ", ");
 					writer.write(posArray[i][1] + ", ");
-					writer.write(posArray[i][2]+"\n" );
+					writer.write(posArray[i][2] + ", ");
+					writer.write(posArray[i][3]+"\n" );
 			}
 			writer.close();
 		} finally {

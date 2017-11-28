@@ -1,5 +1,6 @@
 package de.uniwuerzburg.physiologie;
 
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 
 import mmcorej.CMMCore;
@@ -7,10 +8,68 @@ import mmcorej.CMMCore;
 public class Piezo {
 
 	private CMMCore mmc;
-	private PluginEngine pluginEngine;
 	
-	public Piezo(){
-		mmc =MMStudio.getInstance().getCMMCore();
+	private PluginEngine pluginEngine;
+	private PluginUtils pluginUtils;
+	private DstormPluginGui gui;
+	private AccessorySequenceSettings accSettings;
+	private Studio app_;
+	private SequenceRun sequenceRun;
+	// fix variables
+
+		public void setSequenceRun(SequenceRun sequenceRun) {
+		this.sequenceRun = sequenceRun;
+	}
+
+		final int segmentLength = 20;
+		private String segmentLengthS = String.valueOf(segmentLength);
+
+		// variables for GUI interaction
+		private int recordedOCFraction = 10;
+		private int frames;
+		double scanDistance;
+		private double upperStart;
+		
+		private double lowerStart;
+		
+		private int scanNumber;
+		private int outputCycles;
+		private String outputCyclesS;
+		private double cycleDistance;
+		private int wavetableID = 5;
+		
+		private String wavetableIDS=String.valueOf(wavetableID);
+		private String cycleDistanceS;
+		private int wavetablerate = 1;
+		private String wavetablerateS =String.valueOf(wavetablerate);
+		private int wavepointfraction = 5;
+		private String wavepointfractionS = String.valueOf(wavepointfraction);
+		private int wavepoint;
+		private String wavepointS;
+		private double tempPosz;
+		private int outputcycleIDOld;
+		private int outputCycleID;
+		private int scannumberindex;
+		private int currentPiezoFrame;
+		private int arrayindex;
+		private String loopnametobreak;
+		private String upperStartS;
+		private String lowerStartS;
+		private boolean noSettings;
+		private String[][] positionarray ;
+		public String[][] getPositionarray() {
+			return positionarray;
+		}
+
+		private int positionArrayLength;
+		private String camera = mmc.getCameraDevice();
+		
+		public Piezo(AccessorySequenceSettings accSettings, Studio app_, DstormPluginGui gui,PluginUtils pluginUtils){
+		this.mmc =MMStudio.getInstance().getCMMCore();
+		this.pluginUtils=pluginUtils;
+		this.gui=gui;
+		this.accSettings=accSettings;
+		this. app_=app_;
 		try {
 			mmc.loadDevice("Port", "SerialManager", "COM10");
 			
@@ -39,10 +98,10 @@ public class Piezo {
 			mmc.setSerialPortCommand("Port", "MOV Z " + tempPoszS, "\n");
 			Thread.sleep(50);
 		} catch (InterruptedException e) {
-			pluginEngine.errorDialog("error in setting zPosOnly");
+			pluginUtils.errorDialog("error in setting zPosOnly");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting zPosOnly");
+			pluginUtils.errorDialog("error in setting zPosOnly");
 			e.printStackTrace();
 		}	
 	}
@@ -127,7 +186,7 @@ public class Piezo {
 					mmc.setSerialPortCommand("Port", "TRI 1 0" , "\n");
 					}
 			} catch (Exception e) {
-				pluginEngine.errorDialog("error in setting Piezo Trigger mode");
+				pluginUtils.errorDialog("error in setting Piezo Trigger mode");
 				e.printStackTrace();
 			}
 			}
@@ -146,10 +205,10 @@ public class Piezo {
 				triggerInputState=false;
 			}
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger mode");
+			pluginUtils.errorDialog("error in getting Piezo Trigger mode");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger mode");
+			pluginUtils.errorDialog("error in getting Piezo Trigger mode");
 			e.printStackTrace();
 		}
 		return triggerInputState;
@@ -164,7 +223,7 @@ public class Piezo {
 					mmc.setSerialPortCommand("Port", "CTI 1 1 1", "\n");
 					}
 			} catch (Exception e) {
-				pluginEngine.errorDialog("error in setting Piezo Trigger Type");
+				pluginUtils.errorDialog("error in setting Piezo Trigger Type");
 				e.printStackTrace();
 			}
 			}
@@ -183,10 +242,10 @@ public class Piezo {
 			triggerInputType="level";
 	}
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger Type");
+			pluginUtils.errorDialog("error in getting Piezo Trigger Type");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger Type");
+			pluginUtils.errorDialog("error in getting Piezo Trigger Type");
 			e.printStackTrace();
 		}
 	return triggerInputType;
@@ -194,7 +253,7 @@ public class Piezo {
 
 
 
-	//Set Configuration of trigger input Polarity Triggerinputchannel 1 parametre to : String "active high"  or "active low" 	
+	//Set Configuration of trigger input Polarity Triggerinputchannel 1 parametre to :  "high" =active high  or "low" =active low 	
 	public void setPiezoConfigurationOfTriggerInputPolarity (String string){
 		
 		try {
@@ -203,12 +262,12 @@ public class Piezo {
 				mmc.setSerialPortCommand("Port", "CTI 1 7 0" , "\n");
 				}
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting Piezo Trigger Polarity");
+			pluginUtils.errorDialog("error in setting Piezo Trigger Polarity");
 			e.printStackTrace();
 		}
 		}
 
-	//Get Configuration of trigger input Polarity Triggerinputchannel 1 :  "active high"  or "active low"
+	//Get Configuration of trigger input Polarity Triggerinputchannel 1 :  "activehigh"  or "activelow"
 	public String getPiezoConfigurationOfTriggerInputPolarity (){ 
 		String triggerPolarity="active high";
 		try {
@@ -222,39 +281,40 @@ public class Piezo {
 				triggerPolarity="active high";
 			}
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger Polarity");
+			pluginUtils.errorDialog("error in getting Piezo Trigger Polarity");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting Piezo Trigger Polarity");
+			pluginUtils.errorDialog("error in getting Piezo Trigger Polarity");
 			e.printStackTrace();
 		}
 		return triggerPolarity;
 		}
 
 	// set Piezo rectangular positiv TriggerOutput to a fraction of 1/wavepointfraction
-	public void setPiezoTriggerOutput(int wavepointfraction)  {
+	public void setPiezoTriggerOutput(int wavepointfraction, int segmentLength)  {
 		
 		try {
 			mmc.setSerialPortCommand("Port", "TWC" , "\n");
 			mmc.setSerialPortCommand("Port", "CTO 1 3 4" , "\n");
 			mmc.setSerialPortCommand("Port", "CTO 1 7 1" , "\n");
-			mmc.setSerialPortCommand("Port", "WAV? 5 1 ", "\n");
-			int wavePoints=Integer.parseInt(mmc.getSerialPortAnswer("Port","\n").substring(4));
-			System.out.println( "Number of wavepoints: ," + wavePoints);
-			for (int i=0; i < wavePoints; i++){
-			int wavepoint=i+1;
+			//mmc.setSerialPortCommand("Port", "WAV? 5 1 ", "\n");
+			//int wavePoints=Integer.parseInt(mmc.getSerialPortAnswer("Port","\n").substring(4));
+			//System.out.println( "Number of wavepoints: ," + wavePoints);
+			for (int i=0; i < segmentLength; i++){
+			wavepoint=i+1;
+			String.valueOf(wavepoint);
 			if (i%wavepointfraction==0){
-			mmc.setSerialPortCommand("Port", "TWS 1 "+wavepoint+" 1" , "\n");
+			mmc.setSerialPortCommand("Port", "TWS 1 "+String.valueOf(wavepoint)+" 1" , "\n");
 			}
 			else{
-			mmc.setSerialPortCommand("Port", "TWS 1 "+wavepoint+" 0" , "\n");
+			mmc.setSerialPortCommand("Port", "TWS 1 "+String.valueOf(wavepoint)+" 0" , "\n");
 			}
 			}
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in setting Piezo output trigger");
+			pluginUtils.errorDialog("error in setting Piezo output trigger");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting Piezo output trigger");
+			pluginUtils.errorDialog("error in setting Piezo output trigger");
 			e.printStackTrace();
 		}
 		}
@@ -262,9 +322,9 @@ public class Piezo {
 	//set number of Piezooutputcycles
 	public void setPiezoOutputcycles (int outputCycles){
 		try {
-			mmc.setSerialPortCommand("Port", "WGC 1 " + outputCycles , "\n");
+			mmc.setSerialPortCommand("Port", "WGC 1 " + String.valueOf(outputCycles) , "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting Piezo outPutCycles");
+			pluginUtils.errorDialog("error in setting Piezo outPutCycles");
 			e.printStackTrace();
 		}	
 		}
@@ -276,10 +336,10 @@ public class Piezo {
 			mmc.setSerialPortCommand("Port", "WGC? 1 " + outputCycles , "\n");
 			outputCycles = Integer.parseInt(mmc.getSerialPortAnswer("Port","\n").substring(2));
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting Piezo outPutCycles");
+			pluginUtils.errorDialog("error in getting Piezo outPutCycles");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting Piezo outPutCycles");
+			pluginUtils.errorDialog("error in getting Piezo outPutCycles");
 			e.printStackTrace();
 		}
 		return outputCycles;
@@ -288,9 +348,9 @@ public class Piezo {
 	//set WavetableID
 	public void setWavegeneratorTableID (int wavetableID){
 		try {
-			mmc.setSerialPortCommand("Port", "WSL 1 " + wavetableID , "\n");
+			mmc.setSerialPortCommand("Port", "WSL 1 " + String.valueOf(wavetableID) , "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting WavegeneratorTableID ");
+			pluginUtils.errorDialog("error in setting WavegeneratorTableID ");
 			e.printStackTrace();
 		}	
 		}
@@ -302,21 +362,21 @@ public class Piezo {
 			mmc.setSerialPortCommand("Port", "WSL? 1 ", "\n");
 			wavetableID = Integer.parseInt(mmc.getSerialPortAnswer("Port","\n").substring(2));
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting WavegeneratorTableID ");
+			pluginUtils.errorDialog("error in getting WavegeneratorTableID ");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting WavegeneratorTableID ");
+			pluginUtils.errorDialog("error in getting WavegeneratorTableID ");
 			e.printStackTrace();
 		}
 		return wavetableID;
 		}
 
 	//Set Wavegenerator start position
-	public void setWavegeneratorStartposition (int startPos){
+	public void setWavegeneratorStartposition (double startPos){
 		try {
-			mmc.setSerialPortCommand("Port", "WOS 1 " + startPos , "\n");
+			mmc.setSerialPortCommand("Port", "WOS 1 " + String.valueOf(startPos) , "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting startposition ");
+			pluginUtils.errorDialog("error in setting startposition ");
 			e.printStackTrace();
 		}	
 		}
@@ -328,10 +388,10 @@ public class Piezo {
 			mmc.setSerialPortCommand("Port", "WOS? 1 ", "\n");
 			startPos = Double.parseDouble(mmc.getSerialPortAnswer("Port","\n").substring(2));
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in getting startposition ");
+			pluginUtils.errorDialog("error in getting startposition ");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in getting startposition ");
+			pluginUtils.errorDialog("error in getting startposition ");
 			e.printStackTrace();
 		}
 		return startPos;
@@ -340,25 +400,25 @@ public class Piezo {
 	//Set Wavegenerator table rate
 	public void setWavegeneratorTableRate (int wavetablerate){
 		try {
-			mmc.setSerialPortCommand("Port", "WTR 1 " + wavetablerate + " 0", "\n");
+			mmc.setSerialPortCommand("Port", "WTR 1 " + String.valueOf(wavetablerate) + " 0", "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting WavegeneratorTableRate ");
+			pluginUtils.errorDialog("error in setting WavegeneratorTableRate ");
 			e.printStackTrace();
 		}	
 		}
 
 	//get wavegenerator tableRate
 	public int getWavegeneratorTableRate (){ 
-		int wavetablerate;
+		int wavetablerate=0;
 		try {
-			mmc.setSerialPortCommand(port, "WTR? 1 ", "\n");
+			mmc.setSerialPortCommand("Port", "WTR? 1 ", "\n");
 			String answer=mmc.getSerialPortAnswer("Port","\n");
 			wavetablerate = Integer.parseInt(answer.substring(2,(answer.length()-2)));
 		} catch (NumberFormatException e) {
-			pluginEngine.errorDialog("error in setting WavegeneratorTableRate ");
+			pluginUtils.errorDialog("error in setting WavegeneratorTableRate ");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting WavegeneratorTableRate ");
+			pluginUtils.errorDialog("error in setting WavegeneratorTableRate ");
 			e.printStackTrace();
 		}
 		return wavetablerate;
@@ -372,19 +432,19 @@ public class Piezo {
 	//256 + 2 start at endpoint of last outputcycle triggered
 	public void setWavegeneratorStartStopMode (int startStopMode){
 		try {
-			mmc.setSerialPortCommand("Port", "WGO 1 " + startStopMode+ " 0", "\n");
+			mmc.setSerialPortCommand("Port", "WGO 1 " + String.valueOf(startStopMode)+ " 0", "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting WavegeneratorStartStopMode ");
+			pluginUtils.errorDialog("error in setting WavegeneratorStartStopMode ");
 			e.printStackTrace();
 		}	
 		}
 
 	// piezoWait until Piezo reaches position
-	public void waitForArriving(double position){
+	public void waitForArriving(){
 		try {
 			mmc.setSerialPortCommand("Port", "WAC ONT? Z = 1", "\n");
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in arriving at position");
+			pluginUtils.errorDialog("error in arriving at position");
 			e.printStackTrace();
 		}	
 	}
@@ -395,10 +455,10 @@ public class Piezo {
 			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
-			pluginEngine.errorDialog("error in resetting Piezo");
+			pluginUtils.errorDialog("error in resetting Piezo");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in resetting Piezo");
+			pluginUtils.errorDialog("error in resetting Piezo");
 			e.printStackTrace();
 		}
 	}
@@ -407,12 +467,13 @@ public class Piezo {
 		try {
 			mmc.setSerialPortCommand("Port", "HLT", "\n");
 			Thread.sleep(200);
-			mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+			resetPiezo();
+			System.out.println("Piezo stopped");
 		} catch (InterruptedException e) {
-			pluginEngine.errorDialog("error in stopping Piezo");
+			pluginUtils.errorDialog("error in stopping Piezo");
 			e.printStackTrace();
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in stopping Piezo");
+			pluginUtils.errorDialog("error in stopping Piezo");
 			e.printStackTrace();
 		}
 	}
@@ -421,17 +482,173 @@ public class Piezo {
 	public void setPiezoWavetableParametres(String direction, int wavetableID , int segmentLength, double cycleDistance){ 
 		try {
 			if (direction.equals("upwards")){
-			mmc.setSerialPortCommand("Port","WAV "+ wavetableID + " X LIN " + segmentLength + " " + cycleDistance + " 0 " + segmentLength + " 0 0 ", "\n");}
+			mmc.setSerialPortCommand("Port","WAV "+ wavetableIDS + " X LIN " + String.valueOf(segmentLength) + " " + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
 			if (direction.equals("downwards")){
-				mmc.setSerialPortCommand("Port","WAV "+ wavetableID + " X LIN " + segmentLength + " -" + cycleDistance + " 0 " + segmentLength + " 0 0 ", "\n");}
+				mmc.setSerialPortCommand("Port","WAV "+ wavetableIDS + " X LIN " + String.valueOf(segmentLength) + " -" + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
 			
 		} catch (Exception e) {
-			pluginEngine.errorDialog("error in setting wavetable for " + direction +"-scan");
+			pluginUtils.errorDialog("error in setting wavetable for " + direction +"-scan");
 			e.printStackTrace();
 		}
 		
 	}
-
-
-
+	
+	public void waitForDevice(String port){
+		try {
+			mmc.waitForDevice(port);
+		} catch (Exception e) {
+			pluginUtils.errorDialog("error in setting waiting for device ");
+			e.printStackTrace();
+		}
+	}
+	public void sleep(int ms){
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException e) {
+			pluginUtils.errorDialog("error in sleeping ");
+			e.printStackTrace();
+		}
+	}
+	
+	
+//prepare Piezo for Updownscanning
+public void initializePiezoRun(){
+	resetPiezo();
+	setPiezoTriggerInputState(true);
+	setPiezoConfigurationOfTriggerInputType("edge");
+	setPiezoConfigurationOfTriggerInputPolarity("high");
+	setWavegeneratorTableID(wavetableID);
+	setPiezoOutputcycles(outputCycles);
+	setWavegeneratorTableRate(wavetablerate);
+	waitForDevice("Port");
+	setPiezoTriggerOutput(5,segmentLength);
+	outputCycleID=retrieveOutputcycleID();
+	outputcycleIDOld=outputCycleID;
+	System.out.println("completed output cycle number ," + outputcycleIDOld);
 }
+//direction "upwards"/"downwards"
+public void initializePiezoScan(String direction){
+	double startPos=100.0;
+	if (direction.equals("upwards")){startPos=upperStart;}
+	if (direction.equals("downwards")){startPos=lowerStart;}
+	setWavegeneratorStartposition(startPos);
+	setZPosOnly(startPos);
+	waitForArriving();
+	sleep(50);
+	tempPosz =retrieveZPos();
+	gui.refreshGuiElements(tempPosz, null);
+	System.out.println("reached" + direction + " scan start position");
+	setPiezoWavetableParametres(direction, wavetableID, segmentLength, startPos);
+	try {
+		pluginUtils.waitTenSeconds(direction + scannumberindex);
+	} catch (InterruptedException e) {
+		pluginUtils.errorDialog("error in waitdialog ");
+		e.printStackTrace();
+	}
+	resetPiezo();
+	System.out.println("ready for "+ direction+ "scan");
+	setWavegeneratorStartStopMode(258);
+	outputCycleID = retrieveOutputcycleID();
+	outputcycleIDOld=outputCycleID;
+}
+// write first frame of position array; direction "upwards"/"downwards"
+public void writePosArrayFirstFrame(String direction){
+positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
+positionarray[arrayindex][1] = String.valueOf(1);
+positionarray[arrayindex][2] = String.valueOf(sequenceRun.getCurFrame());
+positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
+arrayindex++;
+}
+//write other frames of position array; direction "upwards"/"downwards"
+public void writePosArrayFrames(String direction){
+	boolean running=true;
+	try {
+		running = mmc.isSequenceRunning(camera);
+	} catch (Exception e) {
+		pluginUtils.errorDialog("error in obtaining if sequence is running");
+		running=false;
+		e.printStackTrace();
+	}
+	if (running) {
+		outputCycleID = retrieveOutputcycleID();
+		if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+			positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
+			positionarray[arrayindex][1] = String.valueOf(retrieveFrameNumber());
+			positionarray[arrayindex][2] = String.valueOf(sequenceRun.getCurFrame());
+			positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
+			arrayindex++;
+			gui.refreshGuiElements(tempPosz, null);
+			outputcycleIDOld = outputCycleID;
+			sleep(50);
+		}
+	}
+	
+}
+
+		
+	
+public void InitializePiezoDevice(){
+	try {
+			mmc.loadDevice("Port", "SerialManager", "COM10");
+		}catch (Exception ex) {
+			System.out.println("load portdevice error ," + ex);
+		}
+
+	try {
+			mmc.initializeDevice("Port");
+		} catch (Exception e1) {
+			System.out.println("initialize portdevice error ," + e1);
+			e1.printStackTrace();
+		}
+}
+public boolean initializePiezoVariables(String recordingParadigm){
+	setNoSettings(false);
+	if (accSettings.recordingParadigm.equals("scan")){
+		frames = (int) accSettings.framesPScanS;
+		scanDistance = accSettings.scanDepthS;
+		upperStart = accSettings.startPositionScan;
+		System.out.println("upperstart position" + upperStart);
+		lowerStart = upperStart - scanDistance;
+		System.out.println("lowerstart position" + lowerStart);
+		recordedOCFraction=5;
+		
+		outputCycles = frames / segmentLength;
+		cycleDistance = scanDistance / outputCycles;
+		System.out.println("upperstart position" + upperStart);
+		scanNumber = accSettings.noScansS;
+		setNoSettings(true);
+		positionArrayLength = (((frames / (recordedOCFraction * 20)) + 1) * scanNumber * 2);
+		positionarray = new String[positionArrayLength][4];
+	};
+	if (accSettings.recordingParadigm.equals("Cal")){
+		frames = (int) accSettings.framesPScanCal;
+		scanDistance = accSettings.scanDepthCal;
+		upperStart = accSettings.startPositionCalibration;
+		System.out.println("upperstart position" + upperStart);
+		lowerStart = upperStart - scanDistance;
+		System.out.println("lowerstart position" + lowerStart);
+		recordedOCFraction=5;
+		
+		outputCycles = frames / segmentLength;
+		cycleDistance = scanDistance / outputCycles;
+		System.out.println("upperstart position" + upperStart);
+		scanNumber = accSettings.noScansS;
+		positionArrayLength = (((frames / (recordedOCFraction * 20)) + 1) * scanNumber * 2);
+		positionarray = new String[positionArrayLength][4];
+		setNoSettings(true);
+	}
+	else{setNoSettings(false);}
+	return isNoSettings();	
+}
+
+public boolean isNoSettings() {
+	return noSettings;
+}
+
+public void setNoSettings(boolean noSettings) {
+	this.noSettings = noSettings;
+}
+}	
+
+
+
