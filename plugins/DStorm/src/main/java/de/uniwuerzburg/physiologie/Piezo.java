@@ -62,14 +62,15 @@ public class Piezo {
 		}
 
 		private int positionArrayLength;
-		private String camera = mmc.getCameraDevice();
+		private String camera;
 		
 		public Piezo(AccessorySequenceSettings accSettings, Studio app_, DstormPluginGui gui,PluginUtils pluginUtils){
 		this.mmc =MMStudio.getInstance().getCMMCore();
 		this.pluginUtils=pluginUtils;
 		this.gui=gui;
 		this.accSettings=accSettings;
-		this. app_=app_;
+		this.app_=app_;
+		this.camera = mmc.getCameraDevice();
 		try {
 			mmc.loadDevice("Port", "SerialManager", "COM10");
 			

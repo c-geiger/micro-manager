@@ -58,6 +58,7 @@ import javax.swing.JSlider;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import java.awt.Dimension;
+import javax.swing.JComboBox;
 
 public class DstormPluginGui extends JFrame {
 	private JLabel labFilesstem;
@@ -257,12 +258,16 @@ private Piezo piezo;
 private JButton btnNewButton;
 private Component verticalStrut_16;
 private Component verticalStrut_17;
-private Component verticalStrut_19;
-private Component verticalStrut_20;
 private Component verticalStrut_21;
 private Component verticalStrut_22;
 private JButton btnStopLive;
 private JButton btnStartLive;
+private Component verticalStrut_14;
+private JLabel lblNewLabel;
+private JTextField textField;
+private Component verticalStrut_18;
+private JLabel lblSelectCamera;
+private CameraSelectionbox cameraSelectionboxLiveCam;
 
 	/**
 	 * Create the frame.
@@ -609,20 +614,22 @@ private JButton btnStartLive;
 		verticalStrut_15 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_15);
 		
-		verticalStrut_17 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_17);
-		
 		verticalStrut_16 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_16);
 		
-		verticalStrut_20 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_20);
-		
-		verticalStrut_19 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_19);
+		verticalStrut_17 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_17);
 		
 		verticalStrut_21 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_21);
+		
+		lblNewLabel = new JLabel("exposure Live [ms]");
+		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		FileInput.add(lblNewLabel);
+		
+		textField = new JTextField();
+		FileInput.add(textField);
+		textField.setColumns(10);
 		
 		btnNewButton = new JButton("Close all images");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -631,25 +638,28 @@ private JButton btnStartLive;
 			}
 		});
 		
-		btnStartLive = new JButton("Start Live");
-
+		btnStartLive = new JButton("Live");
+		btnStartLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
 		btnStartLive.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						for (int i = 0; i < 10; i++) {
-							new SequenceRun(accSettings, folderName, pluginUtils).run();
-						}
-					}
-				}).start();
-			}
-		});
+	         @Override
+	         public void actionPerformed(ActionEvent e) {
+	            app_.live().setLiveMode(btnStartLive.isSelected());
+	            
+	         }
+	      });
+
+		
 		
 		FileInput.add(btnStartLive);
 		
-		btnStopLive = new JButton("Stop Live");
-		FileInput.add(btnStopLive);
+		verticalStrut_14 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_14);
+		
+		
+		
+		
+		
+		
 		btnNewButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/close_windows.png")));
 		FileInput.add(btnNewButton);
 		
@@ -754,30 +764,30 @@ private JButton btnStartLive;
 				tfImageSize.setColumns(10);
 				CannelSelection.add(tfImageSize);
 				
-				chckbxSetCamsettingsIn = new JCheckBox("set camsettings in \u00B5M-Main module");
-				chckbxSetCamsettingsIn.setSelected(false);
-				chckbxSetCamsettingsIn.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-					
+//				chckbxSetCamsettingsIn = new JCheckBox("set camsettings in \u00B5M-Main module");
+//				chckbxSetCamsettingsIn.setSelected(false);
+//				chckbxSetCamsettingsIn.addActionListener(new ActionListener() {
+//					public void actionPerformed(ActionEvent e) {
+//					
 //					try {
 //						if(chckbxSetCamsettingsIn.isSelected()){
 //							accSettings.manuell = true;
-//						}
-//						else {
+//					}
+//					else {
 //							accSettings.manuell = false;
 //						}
 //					} catch (Exception e1) {
 //						
 //					}
-					}
-			});
+//					}
+//			});
 				
 				
 				
 
 					
 						
-				CannelSelection.add(chckbxSetCamsettingsIn);
+				//CannelSelection.add(chckbxSetCamsettingsIn);
 				
 				Component verticalStrut_5 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_5);
@@ -785,8 +795,18 @@ private JButton btnStartLive;
 				verticalStrut_12 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_12);
 				
+				verticalStrut_18 = Box.createVerticalStrut(20);
+				CannelSelection.add(verticalStrut_18);
+				
 				verticalStrut_13 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_13);
+				
+				lblSelectCamera = new JLabel("select camera");
+				lblSelectCamera.setHorizontalAlignment(SwingConstants.CENTER);
+				CannelSelection.add(lblSelectCamera);
+				
+				cameraSelectionboxLiveCam = new CameraSelectionbox(mmc, pluginUtils, true);
+				CannelSelection.add(cameraSelectionboxLiveCam);
 				
 				JPanel panelComments = new JPanel();
 				panel.add(panelComments);
@@ -796,6 +816,10 @@ private JButton btnStartLive;
 				JTextPane tpComments = new JTextPane();
 				tpComments.setBackground(Color.WHITE);
 				panelComments.add(tpComments);
+				
+				
+				
+				
 		//Piezosteuerung
 		piezoGui = new JPanel();
 		piezoGui.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.RAISED, null, null), "Piezo", TitledBorder.LEADING, TitledBorder.TOP, null, null));
