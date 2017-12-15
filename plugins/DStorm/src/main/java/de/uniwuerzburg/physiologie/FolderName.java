@@ -1,6 +1,9 @@
 package de.uniwuerzburg.physiologie;
 
 import java.io.File;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +37,7 @@ public class FolderName {
 	private String imageEpiPath;
 	private String imageCalPath;
 	private AccessorySequenceSettings accSettings;
-
+	private String todayAsString = new SimpleDateFormat("ddMMyyyy").format(Calendar.getInstance().getTime());
 	public FolderName(AccessorySequenceSettings accSettings) {
 		this.accSettings = accSettings;
 		this.root = accSettings.root;
@@ -123,15 +126,40 @@ public class FolderName {
 		System.out.println("prefixfolder__" + this.prefix);
 		this.channel = channel;
 		System.out.println("channelfolder__" + this.channel);
-
-		if (this.channel == "channel1") {
+		
+		
+		
+		
+		
+		
+		
+		if (accSettings.calOnly ){
+			String calOnlyPrefix = todayAsString + prefix;
+			this.imgDirName = getCustomacquisitiondirectory(root, calOnlyPrefix);
+			this.acqDirPath = root + File.separator + imgDirName;
+			
+			File rootImg = createDirectory(acqDirPath);
+			
+			accSettings.calMetadataPath = this.acqDirPath + File.separator  + this.imgDirName +  ".ass"  ;
+			accSettings.calPositionarrayPath = this.acqDirPath+ File.separator + this.imgDirName  +".pos" ;
+			
+			this.Caldirectory = this.acqDirPath;
+			accSettings.calPathname = this.Caldirectory;
+			}
+		
+		
+		if ( this.channel == "channel1" && !accSettings.calOnly){
 			this.imgDirName = getCustomacquisitiondirectory(root, prefix);
 			this.acqDirPath = root + File.separator + imgDirName + File.separator + this.imgDirName + "_" + channel;
 			
 			//accSettings.metadataPath = root + File.separator + filename + File.separator + filename + "_channel1" + File.separator + "Scan_" + filename+ File.separator + filename + ".ass"
 					
-			accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".ass"  ;
-			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".pos"  ;
+//			accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".ass"  ;
+			accSettings.metadataPath = this.acqDirPath + File.separator  + this.imgDirName + "ch1.ass"  ;
+			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch1.pos"  ;
+			accSettings.calMetadataPath = this.acqDirPath + File.separator  +  "Calibration_" + this.imgDirName+ File.separator + this.imgDirName + "ch1.ass"  ;
+			accSettings.calPositionarrayPath = this.acqDirPath + File.separator + "Calibration_" + this.imgDirName+ File.separator + this.imgDirName +"ch1.pos" ;
+			
 			File rootImg = createDirectory(acqDirPath);
 
 			this.BeadsDirectory = this.acqDirPath + File.separator + "beads_" + this.imgDirName;
@@ -147,12 +175,18 @@ public class FolderName {
 			accSettings.scanPathname = this.Scandirectory;
 			
 		}
-
-		if (this.channel == "channel2") {
+		
+		if ( this.channel == "channel2" && !accSettings.calOnly){
+		
 			this.imgDirName = prefix;
 			this.acqDirPath = root + File.separator + imgDirName + File.separator + this.imgDirName + "_" + channel;
-			accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".ass"  ;
-			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".pos"  ;
+			//accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.ass"  ;
+			accSettings.metadataPath = this.acqDirPath + File.separator + File.separator + this.imgDirName + "ch2.ass"  ;
+			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.pos"  ;
+			accSettings.calMetadataPath = this.acqDirPath + File.separator  +  "Calibration_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.ass"  ;
+			accSettings.calPositionarrayPath = this.acqDirPath + File.separator + "Calibration_" + this.imgDirName+ File.separator + this.imgDirName  +"ch2.pos" ;
+			
+			
 			File rootImg = createDirectory(acqDirPath);
 
 			this.BeadsDirectory = this.acqDirPath + File.separator + "beads_" + this.imgDirName;
@@ -169,6 +203,7 @@ public class FolderName {
 			
 		}
 
+		
 		return imageDirPath;
 
 	};
@@ -347,7 +382,7 @@ public class FolderName {
 	};
 
 	public String createCalPath() throws Exception {
-
+	if(!accSettings.calOnly){
 		if (new File(this.Caldirectory).isDirectory()) {
 			String string = "Calibration_" + this.imgDirName;
 			System.out.println("cal directory. " + this.Caldirectory);
@@ -358,7 +393,21 @@ public class FolderName {
 			this.setBasefilename("Calibration_" + this.imgDirName + "_1");
 
 		}
+	}
+	
+	if(accSettings.calOnly){
+		if (new File(this.Caldirectory).isDirectory()) {
+			String string = this.imgDirName;
+			System.out.println("cal directory. " + this.Caldirectory);
+			this.setBasefilename(getActualCustomAcquisitionDirectory(this.Caldirectory, string));
 
+		} else {
+			File rootcal = createDirectory(this.Caldirectory);
+			this.setBasefilename(this.imgDirName + "_1");
+
+		}
+	}
+	
 		this.imageCalPath = this.Caldirectory + File.separator + this.getBasefilename();
 
 		final String fileName = this.getBasefilename();// + ".txt";
@@ -371,7 +420,7 @@ public class FolderName {
 	}
 
 	public String getCalPath() throws Exception {
-
+	if(!accSettings.calOnly){
 		if (new File(this.Caldirectory).isDirectory()) {
 
 			this.setBasefilename(
@@ -382,8 +431,24 @@ public class FolderName {
 			this.setBasefilename("Calibration_" + this.imgDirName + "_1");
 
 		}
+	}
+		
+	if(accSettings.calOnly){
+		if (new File(this.Caldirectory).isDirectory()) {
 
-		this.imageCalPath = this.Caldirectory + File.separator + this.getBasefilename();
+			this.setBasefilename(
+					getActualCustomAcquisitionDirectory(this.Caldirectory,  this.imgDirName));
+
+		} else {
+
+			this.setBasefilename( this.imgDirName + "_1");
+
+		}
+	}
+	
+	
+	
+	this.imageCalPath = this.Caldirectory + File.separator + this.getBasefilename();
 
 		System.out.println("final cal path: " + this.imageCalPath);
 		return this.imageCalPath;

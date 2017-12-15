@@ -21,6 +21,7 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 	
 	private Studio app_;
 	private CMMCore core_;
+	private StrVector cameras;
 	//private AccessorySequenceSettings accSettings ;
 	//private FolderName foldername;
 
@@ -68,7 +69,11 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 	public void onPluginSelected() {
 		try {
 			core_=app_.getCMMCore();
-			String camera = core_.getCameraDevice();
+			
+			cameras=core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+			for(String camera : cameras){
+			
+			//String camera = core_.getCameraDevice();
 			StrVector camProps= core_.getDevicePropertyNames(camera);
 			String[] arrayCamProps = camProps.toArray();
 				
@@ -114,6 +119,7 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 
 			String Shutter_Internal = arrayCamProps [32];
 			core_.setProperty(camera, Shutter_Internal, "Open");
+			}
 			
 		} catch (Exception e) {
 			System.out.println("camera settings Failed");

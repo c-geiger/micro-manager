@@ -214,7 +214,10 @@ public class AccessorySequenceSettings {
 	
 	public String positionarrayPath;
 	
-	
+	public String scanCamera;
+	public String epiCamera;
+	public String beadsCamera;
+	public String calCamera;
 	public String camTrigger43;
 	public String camCDTemperatureSetPoint8;
 	public String camFanMode16;
@@ -238,6 +241,14 @@ public class AccessorySequenceSettings {
 	public double distTocoverslipS;
 	public String comments;
 	public String channel1AssPath;
+
+
+	public String calPositionarrayPath;
+	public String calMetadataPath;
+	public boolean calOnly;
+
+
+	
 	
 	
 	/**
@@ -306,7 +317,10 @@ public class AccessorySequenceSettings {
 		result.metadataPath = metadataPath ;
 
 		
-		
+		result.scanCamera=scanCamera;
+		result.epiCamera=epiCamera;
+		result.beadsCamera=beadsCamera;
+		result.calCamera=calCamera;
 		
 		result.camTrigger43=camTrigger43 ;
 		result.camCDTemperatureSetPoint8=camCDTemperatureSetPoint8 ;
@@ -325,7 +339,8 @@ public class AccessorySequenceSettings {
 		
 		result.metadataPath=metadataPath;
 		result.positionarrayPath=positionarrayPath;
-		
+		result.calPositionarrayPath=calPositionarrayPath;
+		result.calMetadataPath=calMetadataPath;
 		
 		result.distanceToCoverslipEpi = distanceToCoverslipEpi;
 		result.definedFocusPositionEpi=definedFocusPositionEpi;
@@ -335,6 +350,8 @@ public class AccessorySequenceSettings {
 		result.stopRecording=stopRecording;
 		result.comments=comments;
 		result.channel1AssPath=channel1AssPath;
+		result.calOnly=calOnly;
+		
 		
 		return result;
 	}
@@ -382,74 +399,54 @@ public class AccessorySequenceSettings {
 	public void clearAccSettings(){
 		recordingParadigm = null;
 		
-		uniqueimagepath = uniqueimagepath;
-		
-		
-		root = root;
-		channel = channel;
-		prefix = prefix;
-		parRoot = parRoot;
-		channel2Selected = channel2Selected;	
-		imageSizeS = imageSizeS;
+		imageSizeS = 0;
 
-		expS = expS;
-		framesPScanS = framesPScanS;
-		scanSpeedS = scanSpeedS;
-		emGainS = emGainS;
-		scanDepthS = scanDepthS;
-		noScansS = noScansS;
-		framesPMicroS = framesPMicroS;
-		startPositionScan = startPositionScan;
-		endPositionScan = endPositionScan;
+		expS =0;
+		framesPScanS = 0;
+		scanSpeedS = 0;
+		emGainS = 0;
+		scanDepthS = 0;
+		noScansS = 0;
+		framesPMicroS = 0;
+		startPositionScan = 0;
+		endPositionScan = 0;
 		
 
-		expBeads = expBeads;
-		framesPScanBeads = framesPScanBeads;
-		emGainBeads = emGainBeads;
-		positionBeadsBefore =positionBeadsBefore;
-		positionBeadsAfter = positionBeadsAfter;
+		expBeads = 0;
+		framesPScanBeads = 0;
+		emGainBeads = 0;
+		positionBeadsBefore =0;
+		positionBeadsAfter = 0;
 		
-		expEpi = expEpi;
-		emGainEpi = emGainEpi;
-		positionEpi = positionEpi;
+		expEpi = 0;
+		emGainEpi = 0;
+		positionEpi = 0;
 		
 		
-		expCal = expCal;
-		framesPScanCal = framesPScanCal;
-		scanSpeedCal = scanSpeedCal;
-		emGainCal = emGainCal;
-		scanDepthCal = scanDepthCal;
-		framesPmicroCal= framesPmicroCal;
-		startPositionCalibration = startPositionCalibration;
-		endPositionCalibration = endPositionCalibration;
+		expCal = 0;
+		framesPScanCal = 0;
+		scanSpeedCal = 0;
+		emGainCal = 0;
+		scanDepthCal = 0;
+		framesPmicroCal= 0;
+		startPositionCalibration = 0;
+		endPositionCalibration = 0;
 
+		scanCamera=null;
+		epiCamera=null;
+		beadsCamera=null;
+		calCamera=null;
 		
-		scanFilename = scanFilename;
-		scanPathname = scanPathname;
-		epiFilename =epiFilename;
-		epiPathname = epiPathname;
-		calFilename = calFilename;
-		calPathname = calPathname;
-		beadsBeforeFilename = beadsBeforeFilename;
-		beadsAfterFilename = beadsAfterFilename;
-		beadsPathname = beadsPathname;
-		accSettingsFilename = accSettingsFilename;
-		metadataFilename = metadataFilename ;
-		metadataPath = metadataPath ;
-
+		channel1AssPath=null;
 		
-		metadataPath=metadataPath;
-		positionarrayPath=positionarrayPath;
+		distanceToCoverslipEpi = 0;;
+		definedFocusPositionEpi=0;;
+		freeFocuspositionEpi=0;;
+		distTocoverslipS = 0;
 		
+		stopRecording=false;
+		comments=null;
 		
-		distanceToCoverslipEpi = distanceToCoverslipEpi;
-		definedFocusPositionEpi=definedFocusPositionEpi;
-		freeFocuspositionEpi=freeFocuspositionEpi;
-		distTocoverslipS = distTocoverslipS;
-		
-		stopRecording=stopRecording;
-		comments=comments;
-		channel1AssPath=channel1AssPath;	
 	}
 
 }

@@ -1133,9 +1133,10 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
     */
    @Subscribe
    public void onDatastoreFrozen(DatastoreFrozenEvent event) {
-      try {
+    
+	   try {
          String path = store_.getSavePath();
-         if (path != null) {
+         if (path != null && !MMStudio.USE_CUSTOM_PATH) {
             displaySettings_.save(path);
          }
          resetTitle();
@@ -1143,6 +1144,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
       catch (Exception e) {
          studio_.logs().logError(e, "Failed to respond to datastore saved event");
       }
+     
    }
 
    // Letters for differentiating displays for the same dataset.

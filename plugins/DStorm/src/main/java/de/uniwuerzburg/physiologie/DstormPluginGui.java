@@ -160,7 +160,7 @@ public class DstormPluginGui extends JFrame {
 	
 	
 	private AccessorySequenceSettings accSettingsChannel1;
-	
+	private CameraSelectionbox defaultcambox;
 	FolderName folderName = new FolderName(accSettings);
 	
 	
@@ -262,12 +262,24 @@ private Component verticalStrut_21;
 private Component verticalStrut_22;
 private JButton btnStopLive;
 private JButton btnStartLive;
-private Component verticalStrut_14;
-private JLabel lblNewLabel;
-private JTextField textField;
+private JLabel labLiveExposure;
+private JTextField tfLiveExposure;
 private Component verticalStrut_18;
 private JLabel lblSelectCamera;
 private CameraSelectionbox cameraSelectionboxLiveCam;
+private CameraSelectionbox cameraSelectionbox3;
+private JLabel lblNewLabel_1;
+private CameraSelectionbox cameraSelectionbox2;
+private JLabel lblBeads;
+private CameraSelectionbox cameraSelectionbox1;
+private JLabel lblNewLabel_2;
+private CameraSelectionbox cameraSelectionbox4;
+private JLabel lblNewLabel;
+private JButton btnstoppLive;
+private Component verticalStrut_14;
+private Component verticalStrut_19;
+private JCheckBox chckbxNewCheckBox;
+private Component verticalStrut_20;
 
 	/**
 	 * Create the frame.
@@ -296,7 +308,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		//settings=app_.acquisitions().getAcquisitionSettings();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 1250, 800);
+		setBounds(100, 100, 1250, 831);
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -551,8 +563,8 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 			    		    String filenameS = filename.toString();
 			    		    
 			    		    try {
-								channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + "Scan_" + filenameS+ File.separator + filenameS + ".ass";
-								
+								//channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + "Scan_" + filenameS+ File.separator + filenameS + ".ass";
+								channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + filenameS + "ch1.ass";
 								AccessorySequenceSettings accSettingsChannel1 = AccessorySequenceSettings.load(channel1AssPath);
 								System.out.println("settings file loaded = "+ channel1AssPath );
 							} catch (Exception e1) {
@@ -620,16 +632,37 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		verticalStrut_17 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_17);
 		
+		verticalStrut_14 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_14);
+		
+		verticalStrut_19 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_19);
+		
 		verticalStrut_21 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_21);
 		
-		lblNewLabel = new JLabel("exposure Live [ms]");
-		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		FileInput.add(lblNewLabel);
-		
-		textField = new JTextField();
-		FileInput.add(textField);
-		textField.setColumns(10);
+//		labLiveExposure = new JLabel("exposure Live [ms]");
+//		labLiveExposure.setHorizontalAlignment(SwingConstants.CENTER);
+//		FileInput.add(labLiveExposure);
+//		
+//		tfLiveExposure = new JTextField();
+//		tfLiveExposure.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent arg0) {
+//				try {
+//					mmc.setExposure(Double.parseDouble(tfLiveExposure.getText()));
+//				} catch (NumberFormatException e) {
+//					pluginUtils.errorDialog("could not set exposure");
+//					e.printStackTrace();
+//				} catch (Exception e) {
+//					pluginUtils.errorDialog("could not set exposure");
+//					e.printStackTrace();
+//				}
+//				
+//			}
+//		});
+//		tfLiveExposure.setBackground(Color.WHITE);
+//		FileInput.add(tfLiveExposure);
+//		tfLiveExposure.setColumns(10);
 		
 		btnNewButton = new JButton("Close all images");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -638,12 +671,12 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 			}
 		});
 		
-		btnStartLive = new JButton("Live");
+		btnStartLive = new JButton("Start Live");
 		btnStartLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
 		btnStartLive.addActionListener(new ActionListener() {
 	         @Override
 	         public void actionPerformed(ActionEvent e) {
-	            app_.live().setLiveMode(btnStartLive.isSelected());
+	        	 app_.live().setLiveMode(true);
 	            
 	         }
 	      });
@@ -652,9 +685,15 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		FileInput.add(btnStartLive);
 		
-		verticalStrut_14 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_14);
-		
+		btnstoppLive = new JButton("Stop Live");
+		btnstoppLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/stopklein.gif")));
+		FileInput.add(btnstoppLive);
+		btnstoppLive.addActionListener(new ActionListener() {
+	         @Override
+	         public void actionPerformed(ActionEvent e) {
+	            app_.live().setLiveMode(false);
+	         }
+	      });
 		
 		
 		
@@ -667,13 +706,17 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	
-		        	
+		        	accSettings.clearAccSettings();
 		        	root=tfPathstem.getText();
 		        	prefix=tfFilestem.getText();
 		        	accSettings.prefix= prefix;
 		        	accSettings.root= root;
 		        	channel = accSettings.channel;
-		        	
+		        	valEndPosCal.setText("empty");
+		        	valStartPosCal.setText("empty");
+		        	valRecordingPositionEpi.setText("empty");
+		        	valStartPosS.setText("empty");
+		        	valEndPosS.setText("empty");
 		        	folderName.createImgDirectory (root, prefix, channel);
 		        	
 		        	setLabelsPreliminary();
@@ -801,12 +844,12 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 				verticalStrut_13 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_13);
 				
-				lblSelectCamera = new JLabel("select camera");
-				lblSelectCamera.setHorizontalAlignment(SwingConstants.CENTER);
-				CannelSelection.add(lblSelectCamera);
-				
-				cameraSelectionboxLiveCam = new CameraSelectionbox(mmc, pluginUtils, true);
-				CannelSelection.add(cameraSelectionboxLiveCam);
+//				lblSelectCamera = new JLabel("select camera");
+//				lblSelectCamera.setHorizontalAlignment(SwingConstants.CENTER);
+//				CannelSelection.add(lblSelectCamera);
+//				
+//				cameraSelectionboxLiveCam = new CameraSelectionbox(mmc, pluginUtils, true);
+//				CannelSelection.add(cameraSelectionboxLiveCam);
 				
 				JPanel panelComments = new JPanel();
 				panel.add(panelComments);
@@ -1010,6 +1053,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		panel_3.add(tfBigStep2);
 		
 		slider = new JSlider();
+		slider.setValue(100);
 		slider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				if (sliderChangeListenerActive) {
@@ -1094,9 +1138,10 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		        try { 	
 //		        	
 		        	
-		        		
-		        	labStorPathScan.setForeground(Color.BLACK);
 		        	
+		        	labStorPathScan.setForeground(Color.BLACK);
+		        	cameraSelectionbox1.setSelectedCamera(cameraSelectionbox1);
+		        	accSettings.scanCamera=(String) cameraSelectionbox1.getSelectedItem();
 		        	accSettings.startPositionScan=accSettings.positionBeadsBefore-accSettings.distTocoverslipS;
 		        	piezo.setZPos(accSettings.startPositionScan);
 		        	Thread.sleep(200);
@@ -1128,7 +1173,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		        		Thread thread = new Thread() {
 		        		@Override
 						public void run() {
-							pluginEngine.piezorun2();
+							pluginEngine.runSequenceScanacquisition();
 							}
 		        		
 					};
@@ -1296,6 +1341,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		panScanSet.add(labStartPosS);
 		
 	    valStartPosS = new JLabel();
+	    valStartPosS.setText("empty");
 	    valStartPosS.setBackground(Color.WHITE);
 	    panScanSet.add(valStartPosS);
 		
@@ -1303,6 +1349,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		panScanSet.add(labEndPosS);
 		
 		valEndPosS = new JLabel();
+		valEndPosS.setText("empty");
 		panScanSet.add(valEndPosS);
 		
 		
@@ -1379,6 +1426,12 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		panScanSet.add(tfFramesPMicroS);
 		tfFramesPMicroS.setColumns(10);
 		
+		lblNewLabel_2 = new JLabel("ScanCamera");
+		panScanSet.add(lblNewLabel_2);
+		
+		cameraSelectionbox1 = new CameraSelectionbox(mmc, pluginUtils, false);
+		panScanSet.add(cameraSelectionbox1);
+		
 		
 		//abhängiges textfeld
 		tfFramesPMicroS.addActionListener(new ActionListener() {
@@ -1430,19 +1483,22 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	accSettings.recordingParadigm = "Before";
+		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);		  
+		        	accSettings.beadsCamera=(String) cameraSelectionbox2.getSelectedItem();
+		        	accSettings.positionBeadsBefore = piezo.retrieveZPos();
 		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expBeads = Double.parseDouble(tfExpBeads.getText());
-		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanBeads.getText());
+		        	accSettings.framesPScanBeads = Integer.parseInt(tfFramesPScanBeads.getText());
 		        	accSettings.emGainBeads = Integer.parseInt(tfEmGainBeads.getText());
 		        	accSettings.comments = tpComments.getText();
 		        	labStorPathBeadsBef.setText(folderName.createBeadsBeforePath());
 		        	labStorPathBeadsBef.setForeground(Color.BLACK);
 			        
-			        accSettings.positionBeadsBefore = piezo.retrieveZPos();
 			        
-			        valStartPosBefore.setText(stringBeadsPos);
-	      			valStartAfter.setText(stringBeadsPos);
+			        valStartPosBefore.setText(String.valueOf(accSettings.positionBeadsBefore));
+			        valStartAfter.setForeground(Color.BLACK);
+			        valStartAfter.setText(String.valueOf(accSettings.positionBeadsBefore));
 		        	valStartAfter.setForeground(Color.GREEN);
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
@@ -1455,7 +1511,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 						
 						@Override
 						public void run() {
-				        	pluginEngine.runDstormBeforeBeadsAcquisition();
+							pluginEngine.runSequenceBeadsBeforeacquisition();
 							
 						}
 					});
@@ -1480,10 +1536,11 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	accSettings.recordingParadigm = "After";
-		        	
+		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
+		        	accSettings.beadsCamera=(String) cameraSelectionbox2.getSelectedItem();
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expBeads = Double.parseDouble(tfExpScan.getText());
-		        	accSettings.framesPScanBeads = (int)Double.parseDouble(tfFramesPScanS.getText());
+		        	accSettings.framesPScanBeads = Integer.parseInt(tfFramesPScanBeads.getText());
 		        	accSettings.emGainBeads = Integer.parseInt(tfEmGainS.getText());
 		        	accSettings.comments = tpComments.getText();
 		        	
@@ -1492,9 +1549,9 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		        	
 			        accSettings.positionBeadsAfter = piezo.retrieveZPos();
 			        
-			        valStartPosBefore.setText(stringBeadsPos);
-	      			valStartAfter.setText(stringBeadsPos);
-		        	valStartAfter.setForeground(Color.GREEN);
+			        
+	      			valStartAfter.setText(String.valueOf(accSettings.positionBeadsAfter));
+		        	valStartAfter.setForeground(Color.BLACK);
 		        	
 		        	if (!pluginEngine.enoughDiskSpace()){
 		        		pluginUtils.errorDialog("Not enough Disk space");
@@ -1506,7 +1563,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 						
 						@Override
 						public void run() {
-				        	pluginEngine.runDstormAfterBeadsAcquisition();
+							pluginEngine.runSequenceBeadsAfteracquisition();
 							
 						}
 					});
@@ -1534,7 +1591,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		tfExpBeads = new JTextField();
 		tfExpBeads.setBackground(Color.WHITE);
-		tfExpBeads.setText("16 ");
+		tfExpBeads.setText("100");
 		tfExpBeads.setColumns(10);
 		panBeadsSet.add(tfExpBeads);
 		
@@ -1543,7 +1600,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		tfFramesPScanBeads = new JTextField();
 		tfFramesPScanBeads.setBackground(Color.WHITE);
-		tfFramesPScanBeads.setText("20000");
+		tfFramesPScanBeads.setText("200");
 		tfFramesPScanBeads.setColumns(10);
 		panBeadsSet.add(tfFramesPScanBeads);
 		
@@ -1563,8 +1620,8 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		       System.out.println("double command");
 		    	try { 	
 		        	
-//		    		tempPosz=piezo.round(piezo.retrieveZPos());
-		    		tempPosz=piezo.round(50.0);
+	    		tempPosz=piezo.round(piezo.retrieveZPos());
+		    		//tempPosz=piezo.round(50.0);
 		        	
 		        	tempPoszS = String.valueOf(tempPosz) ;
 		         
@@ -1603,6 +1660,12 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		valStartAfter = new JLabel(beadsPosString);
 		panBeadsSet.add(valStartAfter);
+		
+		lblBeads = new JLabel("BeadsCamera");
+		panBeadsSet.add(lblBeads);
+		
+		cameraSelectionbox2 = new CameraSelectionbox(mmc, pluginUtils, false);
+		panBeadsSet.add(cameraSelectionbox2);
 		
 		buttonStartPosBefore.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -1661,7 +1724,11 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		btnStartEpi.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
-		        	accSettings.recordingParadigm = "After";
+		        	accSettings.recordingParadigm = "Epi";
+		        	cameraSelectionbox3.setSelectedCamera(cameraSelectionbox3);
+		        	accSettings.epiCamera=(String) cameraSelectionbox3.getSelectedItem();
+		        	accSettings.positionEpi=Double.parseDouble(valRecordingPositionEpi.getText());
+		        	piezo.setZPos(accSettings.positionEpi);
 		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	accSettings.expEpi = Double.parseDouble(tfExpEpi.getText());		        	
@@ -1681,7 +1748,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 						
 						@Override
 						public void run() {
-				        	pluginEngine.runDstormEpiAcquisition();
+							pluginEngine.runSequenceEpiacquisition();
 							
 						}
 					});
@@ -1718,7 +1785,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		tfExpEpi = new JTextField();
 		tfExpEpi.setBackground(Color.WHITE);
-		tfExpEpi.setText("16 ");
+		tfExpEpi.setText("100");
 		tfExpEpi.setColumns(10);
 		panel_5.add(tfExpEpi);
 		
@@ -1781,8 +1848,14 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		labEpirecordingposition = new JLabel("epi recording position");
 		panel_5.add(labEpirecordingposition);
 		
-		valRecordingPositionEpi = new JLabel("xxx");
+		valRecordingPositionEpi = new JLabel("empty");
 		panel_5.add(valRecordingPositionEpi);
+		
+		lblNewLabel_1 = new JLabel("EpiCamera");
+		panel_5.add(lblNewLabel_1);
+		
+		cameraSelectionbox3 = new CameraSelectionbox(mmc, pluginUtils, false);
+		panel_5.add(cameraSelectionbox3);
 		
 		JPanel Calibration_1 = new JPanel();
 		tabbedPane_1.addTab("Calibration", null, Calibration_1, null);
@@ -1818,6 +1891,13 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		        	
 		        	accSettings.recordingParadigm = "Cal";
 		        	System.out.println ("1 ");
+		        	cameraSelectionbox4.setSelectedCamera(cameraSelectionbox4);
+		        	accSettings.calCamera=(String) cameraSelectionbox4.getSelectedItem();
+		        	
+		        	accSettings.startPositionCalibration=Double.parseDouble(valStartPosCal.getText());
+		        	piezo.setZPos(accSettings.startPositionCalibration);
+		        	Thread.sleep(200);
+		        	accSettings.endPositionCalibration=Double.parseDouble(valEndPosCal.getText());
 		        	
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
 		        	
@@ -1849,7 +1929,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 						
 						@Override
 						public void run() {
-				        	pluginEngine.runDstormCalAcquisition();
+							pluginEngine.runSequenceCalacquisition();
 							
 						}
 					});
@@ -1873,12 +1953,24 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		settingsCal.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Settings Calibration", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		settingsCal.setLayout(new GridLayout(0, 2, 0, 0));
 		
+		verticalStrut_20 = Box.createVerticalStrut(20);
+		settingsCal.add(verticalStrut_20);
+		
+		chckbxNewCheckBox = new JCheckBox("record Calibration only");
+		chckbxNewCheckBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				accSettings.calOnly=chckbxNewCheckBox.isSelected();
+			}
+		});
+		
+		settingsCal.add(chckbxNewCheckBox);
+		
 		labExpCal = new JLabel("Exposure [ms]");
 		settingsCal.add(labExpCal);
 		
 		tfExpCal = new JTextField();
 		tfExpCal.setBackground(Color.WHITE);
-		tfExpCal.setText("16 ");
+		tfExpCal.setText("100");
 		tfExpCal.setColumns(10);
 		settingsCal.add(tfExpCal);
 		
@@ -1961,7 +2053,8 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 	          public void actionPerformed(java.awt.event.ActionEvent e) {
 	              try {
 	              	
-	            doubleCalibrationBeadsPos = 95 + (int)(Math.random() * ((150 - 95) + 1));
+	            doubleCalibrationBeadsPos = piezo.retrieveZPos();
+	            double vartfScanDepthCal=Double.parseDouble(tfScanDepthCal.getText());
 	            tempStartPosCal = doubleCalibrationBeadsPos + vartfScanDepthCal/2;
 				tempEndPosCal = tempStartPosCal - vartfScanDepthCal;
 				
@@ -1979,7 +2072,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 		
 		
 		valFocusPosCal = new JLabel();
-		valFocusPosCal.setText(calibrationBeadsPos);
+		valFocusPosCal.setText("empty");
 		settingsCal.add(valFocusPosCal);
 		 
 		labScanDepthCal = new JLabel("scan depth [\u00B5m]");
@@ -2082,8 +2175,11 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 						valStartPosCalString = String.valueOf(tempStartPosCal);
 						valEndPosCalString = String.valueOf(tempEndPosCal);
 						
-						valStartPosCal.setText(valStartPosCalString);
-						valEndPosCal.setText(valEndPosCalString);
+						lblNewLabel = new JLabel("select camera");
+						settingsCal.add(lblNewLabel);
+						
+						cameraSelectionbox4 = new CameraSelectionbox(mmc, pluginUtils, false);
+						settingsCal.add(cameraSelectionbox4);
 						
 				//abhängiges textfeld
 	}
@@ -2122,7 +2218,7 @@ private CameraSelectionbox cameraSelectionboxLiveCam;
 
 
 public void setLabelsPreliminary() throws Exception{
-		
+		if (!accSettings.calOnly){
 		labStorPathScan.setText(folderName.getScanPath());
 		labStorPathBeadsBef.setText(folderName.getBeadsBeforePath());
 		labStorPathBeadsAf.setText(folderName.getBeadsAfterPath());
@@ -2134,8 +2230,12 @@ public void setLabelsPreliminary() throws Exception{
 		labStorPathBeadsAf.setForeground(Color.MAGENTA);
 		labStorPathEpi.setForeground(Color.MAGENTA);
 		labStorPathCal.setForeground(Color.MAGENTA);	
+		}
 		
-		
+		if (accSettings.calOnly){
+			labStorPathCal.setText(folderName.getCalPath());
+			labStorPathCal.setForeground(Color.MAGENTA);	
+		}
 	}		
 
 public void setLabelsNull() throws Exception{

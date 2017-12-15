@@ -25,7 +25,7 @@ public class Piezo {
 		private String segmentLengthS = String.valueOf(segmentLength);
 
 		// variables for GUI interaction
-		private int recordedOCFraction = 10;
+		private int recordedOCFraction = 2;
 		private int frames;
 		double scanDistance;
 		private double upperStart;
@@ -49,6 +49,10 @@ public class Piezo {
 		private double tempPosz;
 		private int outputcycleIDOld;
 		private int outputCycleID;
+		public int getOutputCycleID() {
+			return outputCycleID;
+		}
+
 		private int scannumberindex;
 		private int currentPiezoFrame;
 		private int arrayindex;
@@ -147,7 +151,7 @@ public class Piezo {
 	public int retrieveOutputcycleID(){
 		int outputCycleID=0;
 		try {
-			mmc.setSerialPortCommand("Port", "WGN?", "\n"); // WGN get number of completed output cycles
+			mmc.setSerialPortCommand("Port", "WGN? 1", "\n"); // WGN get number of completed output cycles
 			String answer = mmc.getSerialPortAnswer("Port", "\n");
 			outputCycleID = Integer.parseInt((answer).substring(2));
 		
@@ -334,7 +338,7 @@ public class Piezo {
 	public int getPiezoOutputcycles (){ 
 		int outputCycles=0;
 		try {
-			mmc.setSerialPortCommand("Port", "WGC? 1 " + outputCycles , "\n");
+			mmc.setSerialPortCommand("Port", "WGC? 1 " , "\n");
 			outputCycles = Integer.parseInt(mmc.getSerialPortAnswer("Port","\n").substring(2));
 		} catch (NumberFormatException e) {
 			pluginUtils.errorDialog("error in getting Piezo outPutCycles");
@@ -433,7 +437,7 @@ public class Piezo {
 	//256 + 2 start at endpoint of last outputcycle triggered
 	public void setWavegeneratorStartStopMode (int startStopMode){
 		try {
-			mmc.setSerialPortCommand("Port", "WGO 1 " + String.valueOf(startStopMode)+ " 0", "\n");
+			mmc.setSerialPortCommand("Port", "WGO 1 " + String.valueOf(startStopMode), "\n");
 		} catch (Exception e) {
 			pluginUtils.errorDialog("error in setting WavegeneratorStartStopMode ");
 			e.printStackTrace();
@@ -483,16 +487,20 @@ public class Piezo {
 	public void setPiezoWavetableParametres(String direction, int wavetableID , int segmentLength, double cycleDistance){ 
 		try {
 			if (direction.equals("upwards")){
-			mmc.setSerialPortCommand("Port","WAV "+ wavetableIDS + " X LIN " + String.valueOf(segmentLength) + " " + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
+				mmc.setSerialPortCommand("Port","WAV "+ String.valueOf(wavetableID) + " X LIN " + String.valueOf(segmentLength) + " -" + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
 			if (direction.equals("downwards")){
-				mmc.setSerialPortCommand("Port","WAV "+ wavetableIDS + " X LIN " + String.valueOf(segmentLength) + " -" + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
-			
+				mmc.setSerialPortCommand("Port","WAV "+ String.valueOf(wavetableID) + " X LIN " + String.valueOf(segmentLength) + " " + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
+			if (direction.equals("calibration")){
+				mmc.setSerialPortCommand("Port","WAV "+ String.valueOf(wavetableID) + " X LIN " + String.valueOf(segmentLength) + " -" + String.valueOf(cycleDistance) + " 0 " + String.valueOf(segmentLength) + " 0 0 ", "\n");}
+		
 		} catch (Exception e) {
 			pluginUtils.errorDialog("error in setting wavetable for " + direction +"-scan");
 			e.printStackTrace();
 		}
 		
 	}
+	
+	
 	
 	public void waitForDevice(String port){
 		try {
@@ -532,6 +540,7 @@ public void initializePiezoScan(String direction){
 	double startPos=100.0;
 	if (direction.equals("upwards")){startPos=upperStart;}
 	if (direction.equals("downwards")){startPos=lowerStart;}
+	if (direction.equals("calibration")){startPos=accSettings.startPositionCalibration;}
 	setWavegeneratorStartposition(startPos);
 	setZPosOnly(startPos);
 	waitForArriving();
@@ -539,7 +548,7 @@ public void initializePiezoScan(String direction){
 	tempPosz =retrieveZPos();
 	gui.refreshGuiElements(tempPosz, null);
 	System.out.println("reached" + direction + " scan start position");
-	setPiezoWavetableParametres(direction, wavetableID, segmentLength, startPos);
+	setPiezoWavetableParametres(direction, wavetableID, segmentLength, cycleDistance);
 	try {
 		pluginUtils.waitTenSeconds(direction + scannumberindex);
 	} catch (InterruptedException e) {
@@ -547,23 +556,25 @@ public void initializePiezoScan(String direction){
 		e.printStackTrace();
 	}
 	resetPiezo();
-	System.out.println("ready for "+ direction+ "scan");
+	System.out.println("ready for "+ direction + "-scan");
 	setWavegeneratorStartStopMode(258);
 	outputCycleID = retrieveOutputcycleID();
 	outputcycleIDOld=outputCycleID;
 }
 // write first frame of position array; direction "upwards"/"downwards"
 public void writePosArrayFirstFrame(String direction){
-positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
-positionarray[arrayindex][1] = String.valueOf(1);
-positionarray[arrayindex][2] = String.valueOf(sequenceRun.getCurFrame());
-positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
-arrayindex++;
+	positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
+	positionarray[arrayindex][1] = String.valueOf(1);
+	positionarray[arrayindex][2] = String.valueOf(1);
+	positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
+	arrayindex++;
 }
 //write other frames of position array; direction "upwards"/"downwards"
 public void writePosArrayFrames(String direction){
 	boolean running=true;
 	try {
+		camera = mmc.getCameraDevice();
+		System.out.println(camera);
 		running = mmc.isSequenceRunning(camera);
 	} catch (Exception e) {
 		pluginUtils.errorDialog("error in obtaining if sequence is running");
@@ -572,11 +583,16 @@ public void writePosArrayFrames(String direction){
 	}
 	if (running) {
 		outputCycleID = retrieveOutputcycleID();
+		tempPosz = retrieveZPos();
+		System.out.println("ID "+outputCycleID);
 		if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+			int counter = 1;
+			System.out.println("test"+ counter);
+			counter++;
 			positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
 			positionarray[arrayindex][1] = String.valueOf(retrieveFrameNumber());
 			positionarray[arrayindex][2] = String.valueOf(sequenceRun.getCurFrame());
-			positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
+			positionarray[arrayindex][3] = String.valueOf(tempPosz);
 			arrayindex++;
 			gui.refreshGuiElements(tempPosz, null);
 			outputcycleIDOld = outputCycleID;
@@ -602,16 +618,16 @@ public void InitializePiezoDevice(){
 			e1.printStackTrace();
 		}
 }
-public boolean initializePiezoVariables(String recordingParadigm){
+public boolean initializePiezoVariables(){
 	setNoSettings(false);
-	if (accSettings.recordingParadigm.equals("scan")){
+	if (accSettings.recordingParadigm.equals("Scan")){
 		frames = (int) accSettings.framesPScanS;
 		scanDistance = accSettings.scanDepthS;
 		upperStart = accSettings.startPositionScan;
 		System.out.println("upperstart position" + upperStart);
 		lowerStart = upperStart - scanDistance;
 		System.out.println("lowerstart position" + lowerStart);
-		recordedOCFraction=5;
+		recordedOCFraction=2;
 		
 		outputCycles = frames / segmentLength;
 		cycleDistance = scanDistance / outputCycles;
@@ -620,6 +636,7 @@ public boolean initializePiezoVariables(String recordingParadigm){
 		setNoSettings(true);
 		positionArrayLength = (((frames / (recordedOCFraction * 20)) + 1) * scanNumber * 2);
 		positionarray = new String[positionArrayLength][4];
+		arrayindex=0;
 	};
 	if (accSettings.recordingParadigm.equals("Cal")){
 		frames = (int) accSettings.framesPScanCal;
@@ -628,14 +645,15 @@ public boolean initializePiezoVariables(String recordingParadigm){
 		System.out.println("upperstart position" + upperStart);
 		lowerStart = upperStart - scanDistance;
 		System.out.println("lowerstart position" + lowerStart);
-		recordedOCFraction=5;
+		recordedOCFraction=1;
 		
 		outputCycles = frames / segmentLength;
 		cycleDistance = scanDistance / outputCycles;
 		System.out.println("upperstart position" + upperStart);
-		scanNumber = accSettings.noScansS;
-		positionArrayLength = (((frames / (recordedOCFraction * 20)) + 1) * scanNumber * 2);
+		
+		positionArrayLength = ((frames / (recordedOCFraction * 20)) + 1) ;
 		positionarray = new String[positionArrayLength][4];
+		arrayindex=0;
 		setNoSettings(true);
 	}
 	else{setNoSettings(false);}

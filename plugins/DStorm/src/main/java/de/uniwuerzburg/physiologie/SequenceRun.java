@@ -24,7 +24,8 @@ public class SequenceRun implements Runnable {
 	String camera = null;
 	private SequenceSettings settings=app_.acquisitions().getAcquisitionSettings();
 	private int curFrame =0;
-	public int getCurFrame() {
+	
+	synchronized public int getCurFrame() {
 		return curFrame;
 	}
 
@@ -34,7 +35,7 @@ public class SequenceRun implements Runnable {
 		this.accSettings=accSettings;
 		this.folderName=folderName;
 		this.pluginUtils=pluginUtils;
-
+		if (accSettings.recordingParadigm.equals("Scan")){
 		try{
 
 			settings.useCustomIntervals = false;
@@ -58,7 +59,7 @@ public class SequenceRun implements Runnable {
 			MMStudio.USE_CUSTOM_PATH=true;
 			MMStudio.CUSTOM_FILE_NAME = accSettings.scanFilename;
 			MMStudio.CUSTOM_PATH_NAME = accSettings.scanPathname;
-			accSettings.framesPScanS=15000.0;
+			//accSettings.framesPScanS=15000.0;
 			store = app_.data().createMultipageTIFFDatastore(accSettings.scanPathname, false, false);
 
 			// Create a display to show images as they are acquired.
@@ -68,7 +69,149 @@ public class SequenceRun implements Runnable {
 		catch(Exception e){
 			e.printStackTrace();
 		}
+		}
+		
+		if (accSettings.recordingParadigm.equals("Cal")){
+			try{
 
+				settings.useCustomIntervals = false;
+				settings.intervalMs = 0;
+				
+				camera = core_.getCameraDevice();
+				core_.setExposure(accSettings.expCal);
+				exposureMs = core_.getExposure();
+				int roi = accSettings.imageSizeS;
+				int roiBorderx = 256 -(roi/2);
+				int roiBordery = 256 -(roi/2);
+				core_.setROI(roiBorderx, roiBordery ,roi,roi);
+				
+				try {
+					folderName.createCalPath();
+				} catch (Exception e1) {
+					System.out.println ("filemaker error");
+					e1.printStackTrace();
+				}
+				StorageMultipageTiff.setShouldGenerateMetadataFile(false);
+				MMStudio.USE_CUSTOM_PATH=true;
+				MMStudio.CUSTOM_FILE_NAME = accSettings.calFilename;
+				MMStudio.CUSTOM_PATH_NAME = accSettings.calPathname;
+				//accSettings.framesPScanS=15000.0;
+				store = app_.data().createMultipageTIFFDatastore(accSettings.calPathname, false, false);
+
+				// Create a display to show images as they are acquired.
+				app_.displays().createDisplay(store);
+				app_.displays().manage(store);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			}
+		
+		if (accSettings.recordingParadigm.equals("Before")){
+			try{
+
+				settings.useCustomIntervals = false;
+				settings.intervalMs = 0;
+				
+				camera = core_.getCameraDevice();
+				core_.setExposure(accSettings.expBeads);
+				exposureMs = core_.getExposure();
+				int roi = accSettings.imageSizeS;
+				int roiBorderx = 256 -(roi/2);
+				int roiBordery = 256 -(roi/2);
+				core_.setROI(roiBorderx, roiBordery ,roi,roi);
+				
+				try {
+					folderName.createBeadsBeforePath();
+				} catch (Exception e1) {
+					System.out.println ("filemaker error");
+					e1.printStackTrace();
+				}
+				StorageMultipageTiff.setShouldGenerateMetadataFile(false);
+				MMStudio.USE_CUSTOM_PATH=true;
+				MMStudio.CUSTOM_FILE_NAME = accSettings.beadsBeforeFilename;
+				MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
+				//accSettings.framesPScanS=15000.0;
+				store = app_.data().createMultipageTIFFDatastore(accSettings.beadsPathname, false, false);
+
+				// Create a display to show images as they are acquired.
+				app_.displays().createDisplay(store);
+				app_.displays().manage(store);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			}
+		if (accSettings.recordingParadigm.equals("After")){
+			try{
+
+				settings.useCustomIntervals = false;
+				settings.intervalMs = 0;
+				
+				camera = core_.getCameraDevice();
+				core_.setExposure(accSettings.expBeads);
+				exposureMs = core_.getExposure();
+				int roi = accSettings.imageSizeS;
+				int roiBorderx = 256 -(roi/2);
+				int roiBordery = 256 -(roi/2);
+				core_.setROI(roiBorderx, roiBordery ,roi,roi);
+				
+				try {
+					folderName.createBeadsAfterPath();
+				} catch (Exception e1) {
+					System.out.println ("filemaker error");
+					e1.printStackTrace();
+				}
+				StorageMultipageTiff.setShouldGenerateMetadataFile(false);
+				MMStudio.USE_CUSTOM_PATH=true;
+				MMStudio.CUSTOM_FILE_NAME = accSettings.beadsAfterFilename;
+				MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
+				//accSettings.framesPScanS=15000.0;
+				store = app_.data().createMultipageTIFFDatastore(accSettings.beadsPathname, false, false);
+
+				// Create a display to show images as they are acquired.
+				app_.displays().createDisplay(store);
+				app_.displays().manage(store);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			}
+		if (accSettings.recordingParadigm.equals("Epi")){
+			try{
+
+				settings.useCustomIntervals = false;
+				settings.intervalMs = 0;
+				
+				camera = core_.getCameraDevice();
+				core_.setExposure(accSettings.expEpi);
+				exposureMs = core_.getExposure();
+				int roi = accSettings.imageSizeS;
+				int roiBorderx = 256 -(roi/2);
+				int roiBordery = 256 -(roi/2);
+				core_.setROI(roiBorderx, roiBordery ,roi,roi);
+				
+				try {
+					folderName.createEpiPath();
+				} catch (Exception e1) {
+					System.out.println ("filemaker error");
+					e1.printStackTrace();
+				}
+				StorageMultipageTiff.setShouldGenerateMetadataFile(false);
+				MMStudio.USE_CUSTOM_PATH=true;
+				MMStudio.CUSTOM_FILE_NAME = accSettings.epiFilename;
+				MMStudio.CUSTOM_PATH_NAME = accSettings.epiPathname;
+				//accSettings.framesPScanS=15000.0;
+				store = app_.data().createMultipageTIFFDatastore(accSettings.epiPathname, false, false);
+
+				// Create a display to show images as they are acquired.
+				app_.displays().createDisplay(store);
+				app_.displays().manage(store);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			}
 	}
 	
 	public void run() {
@@ -86,9 +229,21 @@ public class SequenceRun implements Runnable {
 				// between images, and whether or not to halt the acquisition if
 				// the
 				// sequence buffer overflows.
-				core_.startSequenceAcquisition((int)accSettings.framesPScanS, 0, true);
-			
-
+			if (accSettings.recordingParadigm.equals("Scan")){	
+			core_.startSequenceAcquisition((int)accSettings.framesPScanS, 0, true);
+			}
+			if (accSettings.recordingParadigm.equals("Cal")){	
+				core_.startSequenceAcquisition((int)accSettings.framesPScanCal, 0, true);
+				}
+			if (accSettings.recordingParadigm.equals("Before")){	
+				core_.startSequenceAcquisition((int)accSettings.framesPScanBeads, 0, true);
+				}
+			if (accSettings.recordingParadigm.equals("After")){	
+				core_.startSequenceAcquisition((int)accSettings.framesPScanBeads, 0, true);
+				}
+			if (accSettings.recordingParadigm.equals("Epi")){	
+				core_.startSequenceAcquisition(1, 0, true);
+				}
 			// Set up a Coords.CoordsBuilder for applying coordinates to each
 			// image.
 			CoordsBuilder builder = app_.data().getCoordsBuilder().z(0).channel(0).stagePosition(0);
@@ -129,6 +284,7 @@ public class SequenceRun implements Runnable {
 public void sequenceStop(){
 	try {
 		core_.stopSequenceAcquisition();
+		System.out.println("sequence stopped");
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
