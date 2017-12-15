@@ -1890,6 +1890,21 @@ private Component verticalStrut_20;
 		        	
 		        	
 		        	accSettings.recordingParadigm = "Cal";
+		        	
+		        	// if not yet done by get focus now z pos is retrieved
+		        	doubleCalibrationBeadsPos = piezo.retrieveZPos();
+		            double vartfScanDepthCal=Double.parseDouble(tfScanDepthCal.getText());
+		            tempStartPosCal = doubleCalibrationBeadsPos + vartfScanDepthCal/2;
+					tempEndPosCal = tempStartPosCal - vartfScanDepthCal;
+					
+					valStartPosCalString = String.valueOf(tempStartPosCal);
+					valEndPosCalString = String.valueOf(tempEndPosCal);
+					calibrationBeadsPos = String.valueOf(doubleCalibrationBeadsPos);
+					valStartPosCal.setText(valStartPosCalString);
+					valEndPosCal.setText(valEndPosCalString);
+					valFocusPosCal.setText(calibrationBeadsPos);  	
+		        	///////////////////////////////////////////////////
+		        	
 		        	System.out.println ("1 ");
 		        	cameraSelectionbox4.setSelectedCamera(cameraSelectionbox4);
 		        	accSettings.calCamera=(String) cameraSelectionbox4.getSelectedItem();
