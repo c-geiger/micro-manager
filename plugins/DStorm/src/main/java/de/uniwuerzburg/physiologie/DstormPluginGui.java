@@ -564,18 +564,15 @@ private Component verticalStrut_20;
 			    		    
 			    		    try {
 								//channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + "Scan_" + filenameS+ File.separator + filenameS + ".ass";
-								channel1AssPath  = root + File.separator + filenameS + File.separator + filenameS + "_channel1" + File.separator + filenameS + "ch1.ass";
+								channel1AssPath  = root + File.separator + filenameS + "_channel1" + File.separator + filenameS + "ch1.ass";
 								AccessorySequenceSettings accSettingsChannel1 = AccessorySequenceSettings.load(channel1AssPath);
 								System.out.println("settings file loaded = "+ channel1AssPath );
-							} catch (Exception e1) {
-								System.out.println("could not load settings file");
-								java.awt.Toolkit.getDefaultToolkit().beep();
-								e1.printStackTrace();
-							}
+							
 			    		    
 			    		    
 			    		    
 			    		    // get values from Channel 1 settings file
+			    		    System.out.println("settings file loaded imagesizeS= "+ accSettingsChannel1.imageSizeS );
 			    		    accSettings.imageSizeS=accSettingsChannel1.imageSizeS;
 							tfImageSize.setText(String.valueOf(accSettings.imageSizeS));
 							accSettings.scanDepthS=accSettingsChannel1.scanDepthS;
@@ -600,7 +597,11 @@ private Component verticalStrut_20;
 			    		    fileChooser.changeToParentDirectory();
 			    		    File pardirectory = fileChooser.getCurrentDirectory();
 			    		    accSettings.parRoot=(pardirectory.toString());
-			    		   
+			    		    } catch (Exception e1) {
+								System.out.println("could not load settings file");
+								java.awt.Toolkit.getDefaultToolkit().beep();
+								e1.printStackTrace();
+							}
 			    		    
 			    		  
 			    		}
@@ -1539,7 +1540,7 @@ private Component verticalStrut_20;
 		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
 		        	accSettings.beadsCamera=(String) cameraSelectionbox2.getSelectedItem();
 		        	accSettings.imageSizeS = Integer.parseInt(tfImageSize.getText());
-		        	accSettings.expBeads = Double.parseDouble(tfExpScan.getText());
+		        	accSettings.expBeads = Double.parseDouble(tfExpBeads.getText());
 		        	accSettings.framesPScanBeads = Integer.parseInt(tfFramesPScanBeads.getText());
 		        	accSettings.emGainBeads = Integer.parseInt(tfEmGainS.getText());
 		        	accSettings.comments = tpComments.getText();
