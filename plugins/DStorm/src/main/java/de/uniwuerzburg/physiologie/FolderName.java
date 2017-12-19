@@ -162,7 +162,7 @@ public class FolderName {
 			
 			File rootImg = createDirectory(acqDirPath);
 
-			this.BeadsDirectory = this.acqDirPath + File.separator + "beads_" + this.imgDirName;
+			this.BeadsDirectory = this.acqDirPath + File.separator + "Beads_" + this.imgDirName;
 			accSettings.beadsPathname = this.BeadsDirectory;
 			
 			this.Epidirectory = this.acqDirPath + File.separator + "Epi_" + this.imgDirName;
@@ -189,7 +189,7 @@ public class FolderName {
 			
 			File rootImg = createDirectory(acqDirPath);
 
-			this.BeadsDirectory = this.acqDirPath + File.separator + "beads_" + this.imgDirName;
+			this.BeadsDirectory = this.acqDirPath + File.separator + "Beads_" + this.imgDirName;
 			accSettings.beadsPathname = this.BeadsDirectory;
 			
 			this.Epidirectory = this.acqDirPath + File.separator + "Epi_" + this.imgDirName;
@@ -211,13 +211,13 @@ public class FolderName {
 	public String createBeadsBeforePath() throws Exception {
 
 		if (new File(this.BeadsDirectory).isDirectory()) {
-			String string = "beads_" + this.imgDirName + "_before";
+			String string = "Beads_" + this.imgDirName + "_before";
 			System.out.println("beads directory. " + this.BeadsDirectory);
 			this.setBasefilename(getActualCustomAcquisitionDirectory(this.BeadsDirectory, string));
 
 		} else {
 			File rootbeads = createDirectory(this.BeadsDirectory);
-			this.setBasefilename("beads_" + this.imgDirName + "_before_1");
+			this.setBasefilename("Beads_" + this.imgDirName + "_before_1");
 			System.out.println("beads before directorywill be . " + this.BeadsDirectory);
 		}
 
@@ -237,10 +237,10 @@ public class FolderName {
 		if (new File(this.BeadsDirectory).isDirectory()) {
 
 			this.setBasefilename(
-					getActualCustomAcquisitionDirectory(this.BeadsDirectory, "beads_" + this.imgDirName + "_before"));
+					getActualCustomAcquisitionDirectory(this.BeadsDirectory, "Beads_" + this.imgDirName + "_before"));
 		} else {
 
-			this.setBasefilename("beads_" + this.imgDirName + "_before_1");
+			this.setBasefilename("Beads_" + this.imgDirName + "_before_1");
 
 		}
 
@@ -254,13 +254,13 @@ public class FolderName {
 	public String createBeadsAfterPath() throws Exception {
 
 		if (new File(this.BeadsDirectory).isDirectory()) {
-			String string = "beads_" + this.imgDirName + "_after";
+			String string = "Beads_" + this.imgDirName + "_after";
 			System.out.println("beads directory. " + this.BeadsDirectory);
 			this.setBasefilename(getActualCustomAcquisitionDirectory(this.BeadsDirectory, string));
 
 		} else {
 			File rootbeads = createDirectory(this.BeadsDirectory);
-			this.setBasefilename("beads_" + this.imgDirName + "_after_1");
+			this.setBasefilename("Beads_" + this.imgDirName + "_after_1");
 
 		}
 
@@ -280,11 +280,11 @@ public class FolderName {
 		if (new File(this.BeadsDirectory).isDirectory()) {
 
 			this.setBasefilename(
-					getActualCustomAcquisitionDirectory(this.BeadsDirectory, "beads_" + this.imgDirName + "_after"));
+					getActualCustomAcquisitionDirectory(this.BeadsDirectory, "Beads_" + this.imgDirName + "_after"));
 
 		} else {
 
-			this.setBasefilename("beads_" + this.imgDirName + "_after_1");
+			this.setBasefilename("Beads_" + this.imgDirName + "_after_1");
 
 		}
 

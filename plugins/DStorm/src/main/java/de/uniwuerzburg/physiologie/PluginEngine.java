@@ -68,7 +68,7 @@ public class PluginEngine {
 
 		scanloop: 
 			for (scannumberindex = 0; scannumberindex < scanNumber; scannumberindex++) {
-
+				piezo.setScannumberindex(scannumberindex);
 				//upscan
 				direction="upwards";
 				piezo.initializePiezoScan(direction);
@@ -138,6 +138,7 @@ public class PluginEngine {
 			} catch (IOException e) {
 				System.out.println("writing positionarray failed");
 			}
+			gui.setLblScanRunning("finished");
 			System.out.println("successfull recording");
 			piezo.resetPiezo();
 			try {
@@ -153,6 +154,7 @@ public class PluginEngine {
 	
 	
 	public void runSequenceCalacquisition(){
+		piezo.setScannumberindex(42);
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
@@ -162,6 +164,7 @@ public class PluginEngine {
 		
 				direction="calibration";
 				piezo.initializePiezoScan(direction);
+				
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -201,6 +204,7 @@ public class PluginEngine {
 				System.out.println("writing positionarray failed");
 			}
 			System.out.println("successfull recording");
+			gui.setLblScanRunning("finished");
 			piezo.resetPiezo();
 			
 			try {
@@ -222,6 +226,7 @@ public class PluginEngine {
 			pluginUtils.errorDialog("could not write metadata");
 			e.printStackTrace();
 		}
+		gui.setLblScanRunning("finished");
 	};
 	
 	public void runSequenceBeadsAfteracquisition(){
@@ -233,6 +238,7 @@ public class PluginEngine {
 			pluginUtils.errorDialog("could not write metadata");
 			e.printStackTrace();
 		}
+		gui.setLblScanRunning("finished");
 	};
 	public void runSequenceEpiacquisition(){
 		sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);

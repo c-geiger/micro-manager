@@ -54,6 +54,10 @@ public class Piezo {
 		}
 
 		private int scannumberindex;
+		public void setScannumberindex(int scannumberindex) {
+			this.scannumberindex = scannumberindex;
+		}
+
 		private int currentPiezoFrame;
 		private int arrayindex;
 		private String loopnametobreak;
@@ -541,6 +545,8 @@ public void initializePiezoScan(String direction){
 	if (direction.equals("upwards")){startPos=upperStart;}
 	if (direction.equals("downwards")){startPos=lowerStart;}
 	if (direction.equals("calibration")){startPos=accSettings.startPositionCalibration;}
+	
+	gui.setLabScannumber(direction + ": " + scannumberindex);
 	setWavegeneratorStartposition(startPos);
 	setZPosOnly(startPos);
 	waitForArriving();
@@ -550,7 +556,7 @@ public void initializePiezoScan(String direction){
 	System.out.println("reached" + direction + " scan start position");
 	setPiezoWavetableParametres(direction, wavetableID, segmentLength, cycleDistance);
 	try {
-		pluginUtils.waitTenSeconds(direction + scannumberindex);
+		pluginUtils.waitTenSeconds(direction +": " + scannumberindex);
 	} catch (InterruptedException e) {
 		pluginUtils.errorDialog("error in waitdialog ");
 		e.printStackTrace();
@@ -565,7 +571,7 @@ public void initializePiezoScan(String direction){
 public void writePosArrayFirstFrame(String direction){
 	positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
 	positionarray[arrayindex][1] = String.valueOf(1);
-	positionarray[arrayindex][2] = String.valueOf(1);
+	positionarray[arrayindex][2] = String.valueOf(0);
 	positionarray[arrayindex][3] = String.valueOf(retrieveZPos());
 	arrayindex++;
 }

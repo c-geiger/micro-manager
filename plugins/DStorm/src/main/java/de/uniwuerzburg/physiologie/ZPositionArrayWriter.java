@@ -14,7 +14,8 @@ public class ZPositionArrayWriter {
 		try {
 			writer = new FileWriter(file);
 			writer.write("scanDirection , ");
-			writer.write("frame , ");
+			writer.write("frame piezo , ");
+			writer.write("frame camera, ");
 			writer.write("zPosition \n" );
 			int i =0;
 			for( i = 0; i < posArray.length; i++){

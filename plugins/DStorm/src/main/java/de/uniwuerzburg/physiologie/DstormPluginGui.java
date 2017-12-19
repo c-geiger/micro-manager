@@ -18,6 +18,8 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.internal.MMStudio;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
+
 import javax.swing.border.EtchedBorder;
 import javax.swing.BoxLayout;
 import java.awt.FlowLayout;
@@ -87,7 +89,6 @@ public class DstormPluginGui extends JFrame {
 	private JLabel labStorPathEpi;
 	private JLabel labExpEpi;
 	private JLabel labEmGainEpi;
-	private JLabel labStorPathCal;
 	private JLabel labExpCal ;
 	private JLabel labFramesPScanCal;
 	private JLabel labScanspeedCal;
@@ -99,6 +100,8 @@ public class DstormPluginGui extends JFrame {
 	private JLabel labEndPosCal;
 	private JLabel valEndPosCal;
 	private JLabel labFramesPMicroCal;
+	private StrVector cameras;
+	
 	
 	private String pathstate;
 	
@@ -280,7 +283,29 @@ private Component verticalStrut_14;
 private Component verticalStrut_19;
 private JCheckBox chckbxNewCheckBox;
 private Component verticalStrut_20;
+private JButton btnSetRoi;
+private JButton btnStopCal;
+private JLabel labStorPathCal;
+private Component verticalStrut_23;
+private JLabel lblScanRunning;
+public void setLblScanRunning(String scanRunning) {
+	if (scanRunning.equals("running")){
+	lblScanRunning.setText("Scan running :");
+	}
+	if (scanRunning.equals("finished")){
+	lblScanRunning.setText("Scan running :");
+	}
+	if (scanRunning.equals("reset")){
+		lblScanRunning.setText("Scan running :");
+		labScannumber.setText("");
+		}
+}
 
+private JLabel labScannumber;
+public void setLabScannumber(String scanNo) {
+	labScannumber.setText(scanNo);
+	
+}
 	/**
 	 * Create the frame.
 	 * @param pluginEngine 
@@ -706,7 +731,7 @@ private Component verticalStrut_20;
 		btnStartNewImage.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
-		        	
+		        	setLblScanRunning("reset");
 		        	accSettings.clearAccSettings();
 		        	root=tfPathstem.getText();
 		        	prefix=tfFilestem.getText();
@@ -803,10 +828,55 @@ private Component verticalStrut_20;
 				CannelSelection.add(labImageSize);
 				
 				tfImageSize = new JTextField();
+				tfImageSize.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						
+						cameras=app_.getCMMCore().getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+						for(String camera : cameras){
+							
+							accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
+							int roi = accSettings.imageSizeS;
+							int roiBorderx = 256 -(roi/2);
+							int roibordery = 256 -(roi/2);
+							try {
+								app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
+							} catch (Exception e1) {
+								System.out.println("could not set Roi");
+								e1.printStackTrace();
+							}
+						}
+						
+
+					}
+				});
 				tfImageSize.setBackground(Color.WHITE);
 				tfImageSize.setText("512");
 				tfImageSize.setColumns(10);
 				CannelSelection.add(tfImageSize);
+				
+				btnSetRoi = new JButton("set Roi");
+				btnSetRoi.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						
+						cameras=app_.getCMMCore().getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+						for(String camera : cameras){
+							
+							accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
+							int roi = accSettings.imageSizeS;
+							int roiBorderx = 256 -(roi/2);
+							int roibordery = 256 -(roi/2);
+							try {
+								app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
+							} catch (Exception e1) {
+								System.out.println("could not set Roi");
+								e1.printStackTrace();
+							}
+						}
+						
+
+					}
+				});
+				CannelSelection.add(btnSetRoi);
 				
 //				chckbxSetCamsettingsIn = new JCheckBox("set camsettings in \u00B5M-Main module");
 //				chckbxSetCamsettingsIn.setSelected(false);
@@ -844,6 +914,15 @@ private Component verticalStrut_20;
 				
 				verticalStrut_13 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_13);
+				
+				verticalStrut_23 = Box.createVerticalStrut(20);
+				CannelSelection.add(verticalStrut_23);
+				
+				lblScanRunning = new JLabel("");
+				CannelSelection.add(lblScanRunning);
+				
+				labScannumber = new JLabel("");
+				CannelSelection.add(labScannumber);
 				
 //				lblSelectCamera = new JLabel("select camera");
 //				lblSelectCamera.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1139,7 +1218,8 @@ private Component verticalStrut_20;
 		        try { 	
 //		        	
 		        	
-		        	
+		        	app_.live().setLiveMode(false);
+		        	setLblScanRunning("running");
 		        	labStorPathScan.setForeground(Color.BLACK);
 		        	cameraSelectionbox1.setSelectedCamera(cameraSelectionbox1);
 		        	accSettings.scanCamera=(String) cameraSelectionbox1.getSelectedItem();
@@ -1482,7 +1562,9 @@ private Component verticalStrut_20;
 		panel_16.add(btnStartBeadsBefore);
 		btnStartBeadsBefore.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
-		        try { 	
+		        try { 
+		        	app_.live().setLiveMode(false);
+		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "Before";
 		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);		  
 		        	accSettings.beadsCamera=(String) cameraSelectionbox2.getSelectedItem();
@@ -1536,6 +1618,8 @@ private Component verticalStrut_20;
 		btnStartBeadsAfter.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
+		        	app_.live().setLiveMode(false);
+		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "After";
 		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
 		        	accSettings.beadsCamera=(String) cameraSelectionbox2.getSelectedItem();
@@ -1724,7 +1808,8 @@ private Component verticalStrut_20;
 		
 		btnStartEpi.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
-		        try { 	
+		        try {
+		        	app_.live().setLiveMode(false);
 		        	accSettings.recordingParadigm = "Epi";
 		        	cameraSelectionbox3.setSelectedCamera(cameraSelectionbox3);
 		        	accSettings.epiCamera=(String) cameraSelectionbox3.getSelectedItem();
@@ -1880,7 +1965,7 @@ private Component verticalStrut_20;
 		gbc_startPanCal.gridx = 0;
 		gbc_startPanCal.gridy = 0;
 		Calibration.add(startPanCal, gbc_startPanCal);
-		startPanCal.setLayout(new GridLayout(2, 1, 0, 0));
+		startPanCal.setLayout(new GridLayout(3, 1, 0, 0));
 		
 		JButton btnStartCalibrationMeasurement = new JButton("Start calibration measurement");
 		startPanCal.add(btnStartCalibrationMeasurement);
@@ -1888,8 +1973,8 @@ private Component verticalStrut_20;
 		btnStartCalibrationMeasurement.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
-		        	
-		        	
+		        	app_.live().setLiveMode(false);
+		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "Cal";
 		        	
 		        	// if not yet done by get focus now z pos is retrieved
@@ -1957,8 +2042,18 @@ private Component verticalStrut_20;
 		    }
 		});
 		
-		labStorPathCal = new JLabel();
+		labStorPathCal = new JLabel("");
 		startPanCal.add(labStorPathCal);
+		
+		btnStopCal = new JButton("STOP ");
+		btnStopCal.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/stopklein.gif")));
+		startPanCal.add(btnStopCal);
+		
+		btnStopCal.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				accSettings.stopRecording=true;
+				 }
+		});
 		
 		JPanel settingsCal = new JPanel();
 		GridBagConstraints gbc_settingsCal = new GridBagConstraints();
