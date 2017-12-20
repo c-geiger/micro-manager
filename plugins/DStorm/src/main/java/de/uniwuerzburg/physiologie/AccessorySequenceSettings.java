@@ -248,6 +248,9 @@ public class AccessorySequenceSettings {
 	public boolean calOnly;
 
 
+	public String filenamearrayPath;
+
+
 	
 	
 	
@@ -351,7 +354,9 @@ public class AccessorySequenceSettings {
 		result.comments=comments;
 		result.channel1AssPath=channel1AssPath;
 		result.calOnly=calOnly;
-		
+		result.filenamearrayPath=filenamearrayPath;
+
+
 		
 		return result;
 	}

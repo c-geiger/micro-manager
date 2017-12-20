@@ -7,11 +7,14 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.multipagetiff.MultipageTiffWriter;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 
+import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
@@ -22,6 +25,7 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 
 public class PluginEngine {
 
@@ -40,6 +44,8 @@ public class PluginEngine {
 	private int scanNumber;
 	private int outputCycleID;
 	private int outputCycles;
+	private JProgressBar progressbar;
+	private StorageMultipageTiff multitiff;
 
 
 	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui, PluginUtils pluginUtils) {
@@ -52,25 +58,33 @@ public class PluginEngine {
 		settings=app_.acquisitions().getAcquisitionSettings();
 		core=app_.getCMMCore();
 		this.gui=gui;
+		this.progressbar=gui.getProgressBar();
 	}
 
 
 
 	public void runSequenceScanacquisition(){
-
-
+		MMStudio.clearListD();
+		MMStudio.clearListI();
+		MMStudio.clearListS();
+		int progress=1;
 		scanNumber=accSettings.noScansS;
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
 		int scannumberindex = 0;
 		outputCycles=piezo.getPiezoOutputcycles();
-
+		
+		progressbar.setVisible(true);
+		progressbar.setMaximum(scanNumber*2);
+		progressbar.setMinimum(0);
+		progressbar.setValue(0);
 		scanloop: 
 			for (scannumberindex = 0; scannumberindex < scanNumber; scannumberindex++) {
 				piezo.setScannumberindex(scannumberindex);
 				//upscan
 				direction="upwards";
+				MMStudio.setDirection(direction +"  " + String.valueOf(scannumberindex + 1));
 				piezo.initializePiezoScan(direction);
 				new Thread(new Runnable() {
 					@Override
@@ -93,11 +107,28 @@ public class PluginEngine {
 					outputCycleID = piezo.getOutputCycleID();
 					
 				} while (outputCycleID < outputCycles);
+				progressbar.setValue(progress);
+				progress++;
+				
 
+				
+				do{
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						System.out.println("error in wait");
+						e.printStackTrace();
+					}
+					}while (!sequenceRun.frozen());
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					System.out.println("error in wait");
+					e.printStackTrace();
+				}
 				//downscan
-
 				direction="downwards";
-
+				MMStudio.setDirection(direction +"  " + String.valueOf(scannumberindex + 1));
 				piezo.initializePiezoScan(direction);
 				new Thread(new Runnable() {
 					@Override
@@ -125,20 +156,44 @@ public class PluginEngine {
 					
 					
 				} while (outputCycleID < outputCycles);
-
+				progressbar.setValue(progress);
+				progress++;
+				do{
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						System.out.println("error in wait");
+						e.printStackTrace();
+					}
+					}while (!sequenceRun.frozen());
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					System.out.println("error in wait");
+					e.printStackTrace();
+				}
 			}
 		if (accSettings.stopRecording) {
 			stopRecording();
 		}
-
+		
 		else {
 			try {
+				
+				try {
+					pluginUtils.waitTenSeconds("Finishing Recording");
+				} catch (InterruptedException e) {
+					System.out.println("error with wat window");
+					e.printStackTrace();
+				}
 				ZPositionArrayWriter.save(piezo.getPositionarray(), accSettings.positionarrayPath);
+				FileListWriter.save(accSettings.filenamearrayPath);
 				System.out.println("positionarray saving succesfull");
 			} catch (IOException e) {
 				System.out.println("writing positionarray failed");
 			}
 			gui.setLblScanRunning("finished");
+			progressbar.setVisible(false);
 			System.out.println("successfull recording");
 			piezo.resetPiezo();
 			try {
@@ -148,11 +203,19 @@ public class PluginEngine {
 				e.printStackTrace();
 			}
 		}
+			
+		gui.getBtnStartLive().setEnabled(true);
+			
 	}	
 
 
 	
 	
+	
+	
+
+
+
 	public void runSequenceCalacquisition(){
 		piezo.setScannumberindex(42);
 		piezo.InitializePiezoDevice();
@@ -214,6 +277,7 @@ public class PluginEngine {
 				e.printStackTrace();
 			}
 		}
+		gui.getBtnStartLive().setEnabled(true);
 	}
 	
 	
@@ -227,6 +291,7 @@ public class PluginEngine {
 			e.printStackTrace();
 		}
 		gui.setLblScanRunning("finished");
+		gui.getBtnStartLive().setEnabled(true);
 	};
 	
 	public void runSequenceBeadsAfteracquisition(){
@@ -239,6 +304,7 @@ public class PluginEngine {
 			e.printStackTrace();
 		}
 		gui.setLblScanRunning("finished");
+		gui.getBtnStartLive().setEnabled(true);
 	};
 	public void runSequenceEpiacquisition(){
 		sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
@@ -742,7 +808,7 @@ public class PluginEngine {
 	public boolean enoughDiskSpace(){
 		int numFrames=0;
 		if (accSettings.recordingParadigm.equals("Scan")){
-			numFrames= (int)accSettings.framesPScanS;
+			numFrames= (int)accSettings.framesPScanS*accSettings.noScansS*2;
 		}
 		if (accSettings.recordingParadigm.equals("Beads")){
 			numFrames= (int)accSettings.framesPScanBeads;
@@ -767,6 +833,16 @@ public class PluginEngine {
 		long totalMB = roiX * roiY * app_.core().getBytesPerPixel() * numFrames / 1048576L;
 
 		return (1.25 * totalMB) < usableMB;
+	}
+	
+	public long retrieveSplitFrameNumber(){
+		long splitFrame =0;
+		int roiX = accSettings.imageSizeS;
+		int roiY= accSettings.imageSizeS;
+		long dataSizePerimage=(long) roiX*roiY*app_.core().getBytesPerPixel();
+		long maxfilesize= 4191940;
+		splitFrame=  maxfilesize/dataSizePerimage;
+		return  splitFrame;
 	}
 
 	//	private boolean enoughDiskSpace(int roiX, int roiY, int numFrames) {

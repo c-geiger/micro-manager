@@ -157,6 +157,7 @@ public class FolderName {
 //			accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + ".ass"  ;
 			accSettings.metadataPath = this.acqDirPath + File.separator  + this.imgDirName + "ch1.ass"  ;
 			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch1.pos"  ;
+			accSettings.filenamearrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch1.bji"  ;
 			accSettings.calMetadataPath = this.acqDirPath + File.separator  +  "Calibration_" + this.imgDirName+ File.separator + this.imgDirName + "ch1.ass"  ;
 			accSettings.calPositionarrayPath = this.acqDirPath + File.separator + "Calibration_" + this.imgDirName+ File.separator + this.imgDirName +"ch1.pos" ;
 			
@@ -183,6 +184,7 @@ public class FolderName {
 			//accSettings.metadataPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.ass"  ;
 			accSettings.metadataPath = this.acqDirPath + File.separator + File.separator + this.imgDirName + "ch2.ass"  ;
 			accSettings.positionarrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.pos"  ;
+			accSettings.filenamearrayPath = this.acqDirPath + File.separator + "Scan_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.bji"  ;
 			accSettings.calMetadataPath = this.acqDirPath + File.separator  +  "Calibration_" + this.imgDirName+ File.separator + this.imgDirName + "ch2.ass"  ;
 			accSettings.calPositionarrayPath = this.acqDirPath + File.separator + "Calibration_" + this.imgDirName+ File.separator + this.imgDirName  +"ch2.pos" ;
 			

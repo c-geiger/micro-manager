@@ -57,6 +57,8 @@ class FileSet {
 	private String currentTiffUUID_;;
 	private String metadataFileFullPath_;
 	private boolean finished_ = false;
+	
+
 	private boolean separateMetadataFile_ = false;
 	private boolean splitByXYPosition_ = false;
 	private boolean expectedImageOrder_ = true;
@@ -131,6 +133,12 @@ class FileSet {
 		// only need to finish last one here because previous ones in set are
 		// finished as they fill up with images
 		tiffWriters_.getLast().finish();
+		if(MMStudio.USE_CUSTOM_PATH){
+			MMStudio.addListI(getCurrentFrame());
+			MMStudio.addListS(getCurrentFilename());
+			MMStudio.addListD(MMStudio.getDirection());
+			//StorageMultipageTiff.getNumImages();
+		}
 		// close all
 		for (MultipageTiffWriter w : tiffWriters_) {
 			w.close(omeXML);
@@ -159,9 +167,14 @@ class FileSet {
 	public void writeImage(TaggedImage img) throws IOException {
 		// check if current writer is out of space, if so, make a new one
 		if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
+			
 			// write index map here but still need to call close() at end of acq
 			tiffWriters_.getLast().finish();
-
+			if(MMStudio.USE_CUSTOM_PATH){
+				MMStudio.addListI(getCurrentFrame());
+				MMStudio.addListS(getCurrentFilename());
+				MMStudio.addListD(MMStudio.getDirection());
+			}
 			currentTiffFilename_ = baseFilename_ + "_X" + tiffWriters_.size() + ".tif";
 			currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
 			ifdCount_ = 0;

@@ -34,8 +34,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -122,7 +124,9 @@ public final class MultipageTiffWriter {
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
    
-   public MultipageTiffWriter(StorageMultipageTiff masterStorage,
+
+
+public MultipageTiffWriter(StorageMultipageTiff masterStorage,
          JSONObject firstImageTags, String filename)
          throws IOException {
       masterStorage_ = masterStorage;
@@ -362,6 +366,7 @@ public final class MultipageTiffWriter {
       ByteBuffer indexMapNumEntries = allocateByteBuffer(4);
       indexMapNumEntries.putInt(0, numImages);
       fileChannelWrite(indexMapNumEntries, indexMapFirstEntry_ - 4);
+      
    }
 
    /**

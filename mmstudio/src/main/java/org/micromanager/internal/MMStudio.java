@@ -184,8 +184,51 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private StaticInfo staticInfo_;
-
+   //communication with MultipageTiff
+   private static String direction;
    
+   
+   public static void setDirection(String direction) {
+	MMStudio.direction = direction;
+}
+public static String getDirection() {
+	return direction;
+}
+
+
+
+private static List<String> listD=new ArrayList<String>();
+   public static List<String> getListD() {
+	return listD;
+   }
+   public static void addListD(String mystring){
+	   listD.add(mystring);
+   }
+   public static void clearListD(){
+	   listD.clear();
+   }
+   
+   private static List<Integer> listI=new ArrayList<Integer>();
+   public static List<Integer> getListI() {
+	return listI;
+   }
+   public static void addListI(Integer myinteger){
+	   listI.add(myinteger);
+   }
+   public static void clearListI(){
+	   listI.clear();
+   }
+   
+   private static List<String> listS=new ArrayList<String>();
+   public static List<String> getListS() {
+	return listS;
+   }
+   public static void addListS(String mystring){
+	   listS.add(mystring);
+   }
+   public static void clearListS(){
+	   listS.clear();
+   }
    /**
     * Main procedure for stand alone operation.
     * @param args

@@ -291,7 +291,10 @@ public void sequenceStop(){
 	}
 	while(running());
 }
-	
+public boolean frozen()	{
+	boolean frozen = store.getIsFrozen();
+	return frozen;
+}
 public boolean running(){
 	boolean running=false;
 	try {

@@ -61,6 +61,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import java.awt.Dimension;
 import javax.swing.JComboBox;
+import javax.swing.JProgressBar;
 
 public class DstormPluginGui extends JFrame {
 	private JLabel labFilesstem;
@@ -291,17 +292,25 @@ private JLabel lblScanRunning;
 public void setLblScanRunning(String scanRunning) {
 	if (scanRunning.equals("running")){
 	lblScanRunning.setText("Scan running :");
+	lblScanRunning.setForeground(Color.RED);
+	labScannumber.setForeground(Color.RED);
 	}
 	if (scanRunning.equals("finished")){
-	lblScanRunning.setText("Scan running :");
+	lblScanRunning.setText("recording completed!");
+	lblScanRunning.setForeground(Color.BLACK);
+	labScannumber.setForeground(Color.BLACK);
 	}
 	if (scanRunning.equals("reset")){
-		lblScanRunning.setText("Scan running :");
+		lblScanRunning.setText("");
 		labScannumber.setText("");
 		}
 }
 
 private JLabel labScannumber;
+private JProgressBar progressBar=new JProgressBar();
+public JProgressBar getProgressBar() {
+	return progressBar;
+}
 public void setLabScannumber(String scanNo) {
 	labScannumber.setText(scanNo);
 	
@@ -697,9 +706,9 @@ public void setLabScannumber(String scanNo) {
 			}
 		});
 		
-		btnStartLive = new JButton("Start Live");
-		btnStartLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
-		btnStartLive.addActionListener(new ActionListener() {
+		setBtnStartLive(new JButton("Start Live"));
+		getBtnStartLive().setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
+		getBtnStartLive().addActionListener(new ActionListener() {
 	         @Override
 	         public void actionPerformed(ActionEvent e) {
 	        	 app_.live().setLiveMode(true);
@@ -709,7 +718,7 @@ public void setLabScannumber(String scanNo) {
 
 		
 		
-		FileInput.add(btnStartLive);
+		FileInput.add(getBtnStartLive());
 		
 		btnstoppLive = new JButton("Stop Live");
 		btnstoppLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/stopklein.gif")));
@@ -923,6 +932,10 @@ public void setLabScannumber(String scanNo) {
 				
 				labScannumber = new JLabel("");
 				CannelSelection.add(labScannumber);
+				
+				CannelSelection.add(progressBar);
+				//set(handles.progressBar,'visible','off')
+				progressBar.setVisible(false);
 				
 //				lblSelectCamera = new JLabel("select camera");
 //				lblSelectCamera.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1215,10 +1228,15 @@ public void setLabScannumber(String scanNo) {
 		
 		btnStartScan.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
-		        try { 	
+		    	if (valStartPosS.getText().equals("empty")){
+			    	pluginUtils.errorDialog("Start position not defined");
+			    	return;
+			    }
+		    	try { 	
 //		        	
 		        	
 		        	app_.live().setLiveMode(false);
+		        	getBtnStartLive().setEnabled(false);
 		        	setLblScanRunning("running");
 		        	labStorPathScan.setForeground(Color.BLACK);
 		        	cameraSelectionbox1.setSelectedCamera(cameraSelectionbox1);
@@ -1423,6 +1441,8 @@ public void setLabScannumber(String scanNo) {
 		
 	    valStartPosS = new JLabel();
 	    valStartPosS.setText("empty");
+	    
+	    
 	    valStartPosS.setBackground(Color.WHITE);
 	    panScanSet.add(valStartPosS);
 		
@@ -1564,6 +1584,7 @@ public void setLabScannumber(String scanNo) {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 
 		        	app_.live().setLiveMode(false);
+		        	getBtnStartLive().setEnabled(false);
 		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "Before";
 		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);		  
@@ -1619,6 +1640,7 @@ public void setLabScannumber(String scanNo) {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	app_.live().setLiveMode(false);
+		        	getBtnStartLive().setEnabled(false);
 		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "After";
 		        	cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
@@ -1974,6 +1996,7 @@ public void setLabScannumber(String scanNo) {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
 		        try { 	
 		        	app_.live().setLiveMode(false);
+		        	getBtnStartLive().setEnabled(false);
 		        	setLblScanRunning("running");
 		        	accSettings.recordingParadigm = "Cal";
 		        	
@@ -2451,6 +2474,12 @@ public void setscanblack(){
 		}
 public void StopRecording(boolean stop){
 	MMStudio.getAcquisitionEngine().stop(true);
+}
+public JButton getBtnStartLive() {
+	return btnStartLive;
+}
+public void setBtnStartLive(JButton btnStartLive) {
+	this.btnStartLive = btnStartLive;
 }
 
 }

@@ -55,7 +55,7 @@ public class Piezo {
 
 		private int scannumberindex;
 		public void setScannumberindex(int scannumberindex) {
-			this.scannumberindex = scannumberindex;
+			this.scannumberindex = scannumberindex+1;
 		}
 
 		private int currentPiezoFrame;
