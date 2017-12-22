@@ -261,7 +261,6 @@ private Piezo piezo;
 private JButton btnNewButton;
 private Component verticalStrut_16;
 private Component verticalStrut_17;
-private Component verticalStrut_21;
 private Component verticalStrut_22;
 private JButton btnStopLive;
 private JButton btnStartLive;
@@ -283,7 +282,6 @@ private Component verticalStrut_14;
 private Component verticalStrut_19;
 private JCheckBox chckbxNewCheckBox;
 private Component verticalStrut_20;
-private JButton btnSetRoi;
 private JButton btnStopCal;
 private JLabel labStorPathCal;
 private Component verticalStrut_23;
@@ -309,6 +307,13 @@ private String piezoPort;
 private JLabel labScannumber;
 private JProgressBar progressBar=new JProgressBar();
 private JTextField tfPiezoCom;
+private JButton btnStartLiveBeadsCond;
+private JButton btnStartLiveScanCond;
+private JButton btnStartLiveEpiCond;
+private JButton btnStartLiveCalCond;
+private CameraSelectionbox cameraSelectionbox;
+private JLabel lblNewLabel_3;
+private Component verticalStrut_10;
 public JProgressBar getProgressBar() {
 	return progressBar;
 }
@@ -334,7 +339,7 @@ public void setLabScannumber(String scanNo) {
 			}
 		});
 		
-		this.studio= app_;
+		
 		PluginUtils pluginUtils= new PluginUtils(this);
 		this.piezo =new Piezo(accSettings, app_, this, pluginUtils, piezoPort);
 		this.pluginEngine = new PluginEngine(app_, accSettings, folderName, piezo, this, pluginUtils);
@@ -344,7 +349,7 @@ public void setLabScannumber(String scanNo) {
 		//settings=app_.acquisitions().getAcquisitionSettings();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 1250, 831);
+		setBounds(100, 100, 1250, 850);
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -672,41 +677,38 @@ public void setLabScannumber(String scanNo) {
 		verticalStrut_14 = Box.createVerticalStrut(20);
 		FileInput.add(verticalStrut_14);
 		
-		verticalStrut_19 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_19);
-		
-		verticalStrut_21 = Box.createVerticalStrut(20);
-		FileInput.add(verticalStrut_21);
-		
-//		labLiveExposure = new JLabel("exposure Live [ms]");
-//		labLiveExposure.setHorizontalAlignment(SwingConstants.CENTER);
-//		FileInput.add(labLiveExposure);
-//		
-//		tfLiveExposure = new JTextField();
-//		tfLiveExposure.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent arg0) {
-//				try {
-//					mmc.setExposure(Double.parseDouble(tfLiveExposure.getText()));
-//				} catch (NumberFormatException e) {
-//					pluginUtils.errorDialog("could not set exposure");
-//					e.printStackTrace();
-//				} catch (Exception e) {
-//					pluginUtils.errorDialog("could not set exposure");
-//					e.printStackTrace();
-//				}
-//				
-//			}
-//		});
-//		tfLiveExposure.setBackground(Color.WHITE);
-//		FileInput.add(tfLiveExposure);
-//		tfLiveExposure.setColumns(10);
-		
-		btnNewButton = new JButton("Close all images");
-		btnNewButton.addActionListener(new ActionListener() {
+		tfLiveExposure = new JTextField();
+		tfLiveExposure.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				app_.displays().closeAllDisplayWindows(false);
+				try {
+					if (studio.live().getIsLiveModeOn()){
+						studio.live().setLiveMode(false);
+						mmc.setExposure(Double.parseDouble(tfLiveExposure.getText()));
+						studio.live().setLiveMode(true);
+						}
+						else{
+							mmc.setExposure(Double.parseDouble(tfLiveExposure.getText()));	
+						}
+					
+					
+					
+				} catch (NumberFormatException e) {
+					pluginUtils.errorDialog("could not set exposure");
+					e.printStackTrace();
+				} catch (Exception e) {
+					pluginUtils.errorDialog("could not set exposure");
+					e.printStackTrace();
+				}
+				
 			}
 		});
+		
+		labLiveExposure = new JLabel("exposure Live [ms]");
+		labLiveExposure.setHorizontalAlignment(SwingConstants.CENTER);
+		FileInput.add(labLiveExposure);
+		tfLiveExposure.setBackground(Color.WHITE);
+		FileInput.add(tfLiveExposure);
+		tfLiveExposure.setColumns(10);
 		
 		setBtnStartLive(new JButton("Start Live"));
 		getBtnStartLive().setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
@@ -717,10 +719,10 @@ public void setLabScannumber(String scanNo) {
 	            
 	         }
 	      });
-
 		
-		
-		FileInput.add(getBtnStartLive());
+				
+				
+				FileInput.add(getBtnStartLive());
 		
 		btnstoppLive = new JButton("Stop Live");
 		btnstoppLive.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/stopklein.gif")));
@@ -732,12 +734,22 @@ public void setLabScannumber(String scanNo) {
 	         }
 	      });
 		
+		btnNewButton = new JButton("Close all images");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				app_.displays().closeAllDisplayWindows(false);
+			}
+		});
+		
 		
 		
 		
 		
 		btnNewButton.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/close_windows.png")));
 		FileInput.add(btnNewButton);
+		
+		verticalStrut_19 = Box.createVerticalStrut(20);
+		FileInput.add(verticalStrut_19);
 		
 		btnStartNewImage.addActionListener(new ActionListener() {
 		    public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -865,30 +877,6 @@ public void setLabScannumber(String scanNo) {
 				tfImageSize.setColumns(10);
 				CannelSelection.add(tfImageSize);
 				
-				btnSetRoi = new JButton("set Roi");
-				btnSetRoi.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						
-						cameras=app_.getCMMCore().getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
-						for(String camera : cameras){
-							
-							accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
-							int roi = accSettings.imageSizeS;
-							int roiBorderx = 256 -(roi/2);
-							int roibordery = 256 -(roi/2);
-							try {
-								app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
-							} catch (Exception e1) {
-								System.out.println("could not set Roi");
-								e1.printStackTrace();
-							}
-						}
-						
-
-					}
-				});
-				CannelSelection.add(btnSetRoi);
-				
 //				chckbxSetCamsettingsIn = new JCheckBox("set camsettings in \u00B5M-Main module");
 //				chckbxSetCamsettingsIn.setSelected(false);
 //				chckbxSetCamsettingsIn.addActionListener(new ActionListener() {
@@ -920,11 +908,20 @@ public void setLabScannumber(String scanNo) {
 				verticalStrut_12 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_12);
 				
+				lblNewLabel_3 = new JLabel("choose camera");
+				CannelSelection.add(lblNewLabel_3);
+				
+				cameraSelectionbox = new CameraSelectionbox(mmc, pluginUtils, true, app_);
+				CannelSelection.add(cameraSelectionbox);
+				
 				verticalStrut_18 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_18);
 				
 				verticalStrut_13 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_13);
+				
+				verticalStrut_10 = Box.createVerticalStrut(20);
+				CannelSelection.add(verticalStrut_10);
 				
 				verticalStrut_23 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_23);
@@ -1312,6 +1309,30 @@ public void setLabScannumber(String scanNo) {
 		panel_13.add(verticalStrut_22);
 		panel_13.add(btnStop);
 		
+		btnStartLiveScanCond = new JButton("Start Live");
+		btnStartLiveScanCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
+		btnStartLiveScanCond.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				cameraSelectionbox1.setSelectedCamera(cameraSelectionbox1);
+				try {
+					mmc.setExposure(Double.parseDouble(tfExpScan.getText()));
+				} catch (NumberFormatException e1) {
+					System.out.println("NFE exposure");
+					e1.printStackTrace();
+				} catch (Exception e1) {
+					System.out.println("Could not set exposure");
+					e1.printStackTrace();
+				}
+				studio.live().setLiveMode(true);
+			}
+		});
+		GridBagConstraints gbc_btnStartLiveScanCond = new GridBagConstraints();
+		gbc_btnStartLiveScanCond.insets = new Insets(0, 0, 5, 0);
+		gbc_btnStartLiveScanCond.gridx = 0;
+		gbc_btnStartLiveScanCond.gridy = 1;
+		Scanning.add(btnStartLiveScanCond, gbc_btnStartLiveScanCond);
+		
 		
 		
 		
@@ -1540,7 +1561,7 @@ public void setLabScannumber(String scanNo) {
 		lblNewLabel_2 = new JLabel("ScanCamera");
 		panScanSet.add(lblNewLabel_2);
 		
-		cameraSelectionbox1 = new CameraSelectionbox(mmc, pluginUtils, false);
+		cameraSelectionbox1 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
 		panScanSet.add(cameraSelectionbox1);
 		
 		
@@ -1693,6 +1714,31 @@ public void setLabScannumber(String scanNo) {
 		    }
 		});
 		
+		btnStartLiveBeadsCond = new JButton("Start Live");
+		btnStartLiveBeadsCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
+		btnStartLiveBeadsCond.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
+				try {
+					mmc.setExposure(Double.parseDouble(tfExpBeads.getText()));
+				} catch (NumberFormatException e1) {
+					System.out.println("NFE exposure");
+					e1.printStackTrace();
+				} catch (Exception e1) {
+					System.out.println("Could not set exposure");
+					e1.printStackTrace();
+				}
+				studio.live().setLiveMode(true);
+				
+			}
+		});
+		GridBagConstraints gbc_btnStartLiveBeadsCond = new GridBagConstraints();
+		gbc_btnStartLiveBeadsCond.insets = new Insets(0, 0, 5, 0);
+		gbc_btnStartLiveBeadsCond.gridx = 0;
+		gbc_btnStartLiveBeadsCond.gridy = 1;
+		Beads.add(btnStartLiveBeadsCond, gbc_btnStartLiveBeadsCond);
+		
 		JPanel panBeadsSet = new JPanel();
 		GridBagConstraints gbc_panBeadsSet = new GridBagConstraints();
 		gbc_panBeadsSet.anchor = GridBagConstraints.NORTH;
@@ -1781,7 +1827,7 @@ public void setLabScannumber(String scanNo) {
 		lblBeads = new JLabel("BeadsCamera");
 		panBeadsSet.add(lblBeads);
 		
-		cameraSelectionbox2 = new CameraSelectionbox(mmc, pluginUtils, false);
+		cameraSelectionbox2 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
 		panBeadsSet.add(cameraSelectionbox2);
 		
 		buttonStartPosBefore.addActionListener(new ActionListener() {
@@ -1888,6 +1934,29 @@ public void setLabScannumber(String scanNo) {
 		Component verticalStrut_1 = Box.createVerticalStrut(20);
 		panel_7.add(verticalStrut_1);
 		
+		btnStartLiveEpiCond = new JButton("Start Live");
+		btnStartLiveEpiCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
+		btnStartLiveEpiCond.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				cameraSelectionbox3.setSelectedCamera(cameraSelectionbox3);
+				try {
+					mmc.setExposure(Double.parseDouble(tfExpEpi.getText()));
+				} catch (NumberFormatException e1) {
+					System.out.println("NFE exposure");
+					e1.printStackTrace();
+				} catch (Exception e1) {
+					System.out.println("Could not set exposure");
+					e1.printStackTrace();
+				}
+				studio.live().setLiveMode(true);
+			}
+		});
+		GridBagConstraints gbc_btnStartLiveEpiCond = new GridBagConstraints();
+		gbc_btnStartLiveEpiCond.insets = new Insets(0, 0, 5, 0);
+		gbc_btnStartLiveEpiCond.gridx = 0;
+		gbc_btnStartLiveEpiCond.gridy = 1;
+		EpiReference.add(btnStartLiveEpiCond, gbc_btnStartLiveEpiCond);
+		
 		JPanel panel_5 = new JPanel();
 		panel_5.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Settings beads", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		GridBagConstraints gbc_panel_5 = new GridBagConstraints();
@@ -1972,7 +2041,7 @@ public void setLabScannumber(String scanNo) {
 		lblNewLabel_1 = new JLabel("EpiCamera");
 		panel_5.add(lblNewLabel_1);
 		
-		cameraSelectionbox3 = new CameraSelectionbox(mmc, pluginUtils, false);
+		cameraSelectionbox3 = new CameraSelectionbox(mmc, pluginUtils, false,app_);
 		panel_5.add(cameraSelectionbox3);
 		
 		JPanel Calibration_1 = new JPanel();
@@ -2087,6 +2156,29 @@ public void setLabScannumber(String scanNo) {
 				accSettings.stopRecording=true;
 				 }
 		});
+		
+		btnStartLiveCalCond = new JButton("Start Live");
+		btnStartLiveCalCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
+		btnStartLiveCalCond.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				cameraSelectionbox4.setSelectedCamera(cameraSelectionbox4);
+				try {
+					mmc.setExposure(Double.parseDouble(tfExpCal.getText()));
+				} catch (NumberFormatException e1) {
+					System.out.println("NFE exposure");
+					e1.printStackTrace();
+				} catch (Exception e1) {
+					System.out.println("Could not set exposure");
+					e1.printStackTrace();
+				}
+				studio.live().setLiveMode(true);
+			}
+		});
+		GridBagConstraints gbc_btnStartLiveCalCond = new GridBagConstraints();
+		gbc_btnStartLiveCalCond.insets = new Insets(0, 0, 5, 0);
+		gbc_btnStartLiveCalCond.gridx = 0;
+		gbc_btnStartLiveCalCond.gridy = 1;
+		Calibration.add(btnStartLiveCalCond, gbc_btnStartLiveCalCond);
 		
 		JPanel settingsCal = new JPanel();
 		GridBagConstraints gbc_settingsCal = new GridBagConstraints();
@@ -2322,7 +2414,7 @@ public void setLabScannumber(String scanNo) {
 						lblNewLabel = new JLabel("select camera");
 						settingsCal.add(lblNewLabel);
 						
-						cameraSelectionbox4 = new CameraSelectionbox(mmc, pluginUtils, false);
+						cameraSelectionbox4 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
 						settingsCal.add(cameraSelectionbox4);
 						
 				//abhängiges textfeld

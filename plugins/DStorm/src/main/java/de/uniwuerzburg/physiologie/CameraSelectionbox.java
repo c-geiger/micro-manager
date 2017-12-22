@@ -5,13 +5,15 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JComboBox;
 
+import org.micromanager.Studio;
+
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 public class CameraSelectionbox extends JComboBox<String> implements ActionListener{
 
-	
+	private Studio studio;
 	private CMMCore core;
 	private StrVector cameras;
 	private PluginUtils pluginUtils;
@@ -20,8 +22,9 @@ public class CameraSelectionbox extends JComboBox<String> implements ActionListe
 		this.addItem("DemoCamera");
 	}
 
-	public CameraSelectionbox(CMMCore core, PluginUtils pluginUtils, boolean setCamera) {
+	public CameraSelectionbox(CMMCore core, PluginUtils pluginUtils, boolean setCamera, Studio studio) {
 		this.core=core;
+		this.studio=studio;
 		cameras=core.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
 		for(String camera : cameras){
 			this.addItem(camera);
@@ -37,7 +40,14 @@ public class CameraSelectionbox extends JComboBox<String> implements ActionListe
 		if (setCamera){
 		try {
 			camera=getSelectedItem().toString();
+			if (studio.live().getIsLiveModeOn()){
+			studio.live().setLiveMode(false);
 			core.setCameraDevice(camera);
+			studio.live().setLiveMode(true);
+			}
+			else{
+				core.setCameraDevice(camera);	
+			}
 		} catch (Exception e1) {
 			pluginUtils.errorDialog("Could not set camera " + camera);
 			e1.printStackTrace();
