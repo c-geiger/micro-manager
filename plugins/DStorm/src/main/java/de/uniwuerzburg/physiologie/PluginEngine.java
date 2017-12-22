@@ -46,6 +46,9 @@ public class PluginEngine {
 	private int outputCycles;
 	private JProgressBar progressbar;
 	private StorageMultipageTiff multitiff;
+	private int outputcycleIDOld;
+	private int recordedOCFraction=5;
+	private boolean running;
 
 
 	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui, PluginUtils pluginUtils) {
@@ -96,15 +99,29 @@ public class PluginEngine {
 				}).start();
 
 				piezo.writePosArrayFirstFrame(direction);
-				outputCycleID = piezo.getOutputCycleID();
-				
+				outputCycleID = piezo.retrieveOutputcycleID();
+				outputcycleIDOld = outputCycleID;
 				upscanloop: do {
+					//wait until imagerecording starts
+					do{
+					running=sequenceRun.isRunning();
+					}while(!running);
 					
 					if (accSettings.stopRecording) {
 						break scanloop;
 					}
-					piezo.writePosArrayFrames(direction);
-					outputCycleID = piezo.getOutputCycleID();
+					outputCycleID = piezo.retrieveOutputcycleID();
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					piezo.writePosArrayFrames(direction,outputCycleID);
+					}
+					outputcycleIDOld = outputCycleID;
 					
 				} while (outputCycleID < outputCycles);
 				progressbar.setValue(progress);
@@ -143,17 +160,30 @@ public class PluginEngine {
 				}).start();
 
 				piezo.writePosArrayFirstFrame(direction);
-				outputCycleID = piezo.getOutputCycleID();
+				outputCycleID = piezo.retrieveOutputcycleID();
+				outputcycleIDOld = outputCycleID;
 				
 				downscanloop: do {
-
+					//wait until imagerecording starts
+					do{
+					running=sequenceRun.isRunning();
+					}while(!running);
+					
 					if (accSettings.stopRecording) {
 						break scanloop;
 					}
-					piezo.writePosArrayFrames(direction);
-
-					outputCycleID = piezo.getOutputCycleID();
+					outputCycleID = piezo.retrieveOutputcycleID();
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					
+					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					piezo.writePosArrayFrames(direction,outputCycleID);
+					}
+					outputcycleIDOld = outputCycleID;
 					
 				} while (outputCycleID < outputCycles);
 				progressbar.setValue(progress);
@@ -221,7 +251,7 @@ public class PluginEngine {
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
-		int scannumberindex = 0;
+		 
 		outputCycles=piezo.getPiezoOutputcycles();
 
 		
@@ -240,13 +270,27 @@ public class PluginEngine {
 				piezo.writePosArrayFirstFrame(direction);
 				outputCycleID = piezo.getOutputCycleID();
 				
-				calibrationloop: do {
+				calibrationloop:  do {
+					//wait until imagerecording starts
+					do{
+					running=sequenceRun.isRunning();
+					}while(!running);
 					
 					if (accSettings.stopRecording) {
 						break calibrationloop;
 					}
-					piezo.writePosArrayFrames(direction);
-					outputCycleID = piezo.getOutputCycleID();
+					outputCycleID = piezo.retrieveOutputcycleID();
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					piezo.writePosArrayFrames(direction,outputCycleID);
+					}
+					outputcycleIDOld = outputCycleID;
 					
 				} while (outputCycleID < outputCycles);
 

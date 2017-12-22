@@ -57,7 +57,7 @@ public class Piezo {
 		public void setScannumberindex(int scannumberindex) {
 			this.scannumberindex = scannumberindex+1;
 		}
-
+		private String com;
 		private int currentPiezoFrame;
 		private int arrayindex;
 		private String loopnametobreak;
@@ -72,26 +72,32 @@ public class Piezo {
 		private int positionArrayLength;
 		private String camera;
 		
-		public Piezo(AccessorySequenceSettings accSettings, Studio app_, DstormPluginGui gui,PluginUtils pluginUtils){
+		
+		public Piezo(AccessorySequenceSettings accSettings, Studio app_, DstormPluginGui gui,PluginUtils pluginUtils, String com){
 		this.mmc =MMStudio.getInstance().getCMMCore();
 		this.pluginUtils=pluginUtils;
 		this.gui=gui;
 		this.accSettings=accSettings;
 		this.app_=app_;
 		this.camera = mmc.getCameraDevice();
-		try {
-			mmc.loadDevice("Port", "SerialManager", "COM10");
-			
-		} catch (Exception ex) {
-			System.out.println("load portdevice error ," + ex);
-		}
-
-		try {
-			mmc.initializeDevice("Port");
-		} catch (Exception e1) {
-			System.out.println("initialize portdevice error ," + e1);
-			e1.printStackTrace();
-		}
+		this.com=com;
+//		try {
+//			mmc.loadDevice("Port", "SerialManager", com);
+//			
+//		} catch (Exception ex) {
+//			System.out.println("load portdevice error ," + ex);
+//		}
+//
+//		try {
+//			mmc.initializeDevice("Port");
+//		} catch (Exception e1) {
+//			System.out.println("initialize portdevice error ," + e1);
+//			e1.printStackTrace();
+//		}
+		
+		InitializePiezoDevice(com);
+		
+		
 		try {
 			mmc.setSerialPortCommand("Port", "WGO 1 0 " , "\n");
 		} catch (Exception e) {
@@ -133,14 +139,21 @@ public class Piezo {
 
 	public double retrieveZPos(){
 		double tempPosz = 0;
-		try {
-			mmc.setSerialPortCommand("Port", "POS? z", "\n");
-			String tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
-			tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
-		} catch (Exception e1) {
-			System.out.println("can't obtain zPosition");
-			e1.printStackTrace();
-		}	 
+		
+			try {
+				mmc.setSerialPortCommand("Port", "POS? z", "\n");
+				String tempPoszS = mmc.getSerialPortAnswer("Port", "\n");
+				tempPosz = round(Double.parseDouble(tempPoszS.substring(2)));
+			} catch (NumberFormatException e) {
+				System.out.println("NFE-retrieve zPos again");
+				clearPiezoAnswerBuffer();
+				retrieveZPos();
+				e.printStackTrace();
+			} catch (Exception e) {
+				System.out.println("can't obtain zPosition");
+				e.printStackTrace();
+			}
+		
 		return tempPosz;
 
 	}
@@ -154,15 +167,22 @@ public class Piezo {
 	
 	public int retrieveOutputcycleID(){
 		int outputCycleID=0;
-		try {
-			mmc.setSerialPortCommand("Port", "WGN? 1", "\n"); // WGN get number of completed output cycles
-			String answer = mmc.getSerialPortAnswer("Port", "\n");
-			outputCycleID = Integer.parseInt((answer).substring(2));
 		
-		} catch (Exception e) {
-			System.out.println("problem getting OCID");
-			e.printStackTrace();
-		}
+			try {
+				mmc.setSerialPortCommand("Port", "WGN? 1", "\n"); // WGN get number of completed output cycles
+				String answer = mmc.getSerialPortAnswer("Port", "\n");
+				outputCycleID = Integer.parseInt((answer).substring(2));
+			} catch (NumberFormatException e) {
+				System.out.println("NFE-retrieve OCID again");
+				clearPiezoAnswerBuffer();
+				retrieveOutputcycleID();
+				e.printStackTrace();
+			} catch (Exception e) {
+				System.out.println("problem getting OCID");
+				e.printStackTrace();
+			}
+		
+		
 		return outputCycleID;
 	}
 	
@@ -170,12 +190,20 @@ public class Piezo {
 		int wavepoint=0;
 		int currentFrame;
 		int outputCycleID=retrieveOutputcycleID();
-		try {
-			mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
-			wavepoint = Integer.parseInt((mmc.getSerialPortAnswer("Port", "\n")).substring(2));
-		} catch (Exception e) {
-			System.out.println("problem getting Framenumber");			e.printStackTrace();
-		}
+		
+			try {
+				mmc.setSerialPortCommand("Port", "WGI? 1", "\n");
+				wavepoint = Integer.parseInt((mmc.getSerialPortAnswer("Port", "\n")).substring(2));
+			} catch (NumberFormatException e) {
+				System.out.println("NFE-retrieve Framenumber again");
+				clearPiezoAnswerBuffer();
+				retrieveFrameNumber();
+				e.printStackTrace();
+			} catch (Exception e) {
+				System.out.println("problem getting Framenumber");
+				e.printStackTrace();
+			}
+		
 		
 		if (wavepoint<20){
 			currentFrame = (outputCycleID*20) + wavepoint  ;
@@ -462,12 +490,36 @@ public class Piezo {
 		try {
 			mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
 			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
+			
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			pluginUtils.errorDialog("error in resetting Piezo");
 			e.printStackTrace();
 		} catch (Exception e) {
 			pluginUtils.errorDialog("error in resetting Piezo");
+			e.printStackTrace();
+		}
+		
+		clearPiezoAnswerBuffer();
+		
+		
+		
+	}
+	
+	public void clearPiezoAnswerBuffer(){
+		try {
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+			mmc.getSerialPortAnswer("Port","\n");
+		} catch (Exception e) {
+			System.out.println("piezo reset provoked error");
 			e.printStackTrace();
 		}
 	}
@@ -576,25 +628,10 @@ public void writePosArrayFirstFrame(String direction){
 	arrayindex++;
 }
 //write other frames of position array; direction "upwards"/"downwards"
-public void writePosArrayFrames(String direction){
-	boolean running=true;
-	try {
-		camera = mmc.getCameraDevice();
-		System.out.println(camera);
-		running = mmc.isSequenceRunning(camera);
-	} catch (Exception e) {
-		pluginUtils.errorDialog("error in obtaining if sequence is running");
-		running=false;
-		e.printStackTrace();
-	}
-	if (running) {
-		outputCycleID = retrieveOutputcycleID();
-		tempPosz = retrieveZPos();
+public void writePosArrayFrames(String direction, int outputCycleID ){
+		
 		System.out.println("ID "+outputCycleID);
-		if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
-			int counter = 1;
-			System.out.println("test"+ counter);
-			counter++;
+			tempPosz = retrieveZPos();
 			positionarray[arrayindex][0] = direction + "scan" + scannumberindex;
 			positionarray[arrayindex][1] = String.valueOf(retrieveFrameNumber());
 			positionarray[arrayindex][2] = String.valueOf(sequenceRun.getCurFrame());
@@ -602,17 +639,14 @@ public void writePosArrayFrames(String direction){
 			arrayindex++;
 			gui.refreshGuiElements(tempPosz, null);
 			outputcycleIDOld = outputCycleID;
-			sleep(50);
 		}
-	}
 	
-}
 
 		
 	
-public void InitializePiezoDevice(){
+public void InitializePiezoDevice(String com){
 	try {
-			mmc.loadDevice("Port", "SerialManager", "COM10");
+			mmc.loadDevice("Port", "SerialManager", com);
 		}catch (Exception ex) {
 			System.out.println("load portdevice error ," + ex);
 		}
@@ -624,6 +658,22 @@ public void InitializePiezoDevice(){
 			e1.printStackTrace();
 		}
 }
+
+public void InitializePiezoDevice(){
+	try {
+			mmc.loadDevice("Port", "SerialManager", com);
+		}catch (Exception ex) {
+			System.out.println("load portdevice error ," + ex);
+		}
+
+	try {
+			mmc.initializeDevice("Port");
+		} catch (Exception e1) {
+			System.out.println("initialize portdevice error ," + e1);
+			e1.printStackTrace();
+		}
+}
+
 public boolean initializePiezoVariables(){
 	setNoSettings(false);
 	if (accSettings.recordingParadigm.equals("Scan")){
@@ -673,6 +723,7 @@ public boolean isNoSettings() {
 public void setNoSettings(boolean noSettings) {
 	this.noSettings = noSettings;
 }
+
 }	
 
 

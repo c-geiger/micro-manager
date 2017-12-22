@@ -238,7 +238,6 @@ private Component verticalStrut_2;
 private JLabel lsbeEnterZPos;
 private JLabel labZPos;
 private Component verticalStrut_7;
-private Component verticalStrut_10;
 private JLabel label_2;
 private JLabel labBigStep;
 private JPanel panel_3;
@@ -305,9 +304,11 @@ public void setLblScanRunning(String scanRunning) {
 		labScannumber.setText("");
 		}
 }
+private String piezoPort;
 
 private JLabel labScannumber;
 private JProgressBar progressBar=new JProgressBar();
+private JTextField tfPiezoCom;
 public JProgressBar getProgressBar() {
 	return progressBar;
 }
@@ -321,9 +322,10 @@ public void setLabScannumber(String scanNo) {
 	 */
 
 
-	public DstormPluginGui( Studio app_) {
+	public DstormPluginGui( Studio app_,String piezoPort) {
 		setTitle("dStorm Volume Recording V 1.0 2017");
 		this.studio = app_;
+		this.piezoPort = piezoPort;
 		mmc =studio.getCMMCore();
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -334,7 +336,7 @@ public void setLabScannumber(String scanNo) {
 		
 		this.studio= app_;
 		PluginUtils pluginUtils= new PluginUtils(this);
-		this.piezo =new Piezo(accSettings, app_, this, pluginUtils);
+		this.piezo =new Piezo(accSettings, app_, this, pluginUtils, piezoPort);
 		this.pluginEngine = new PluginEngine(app_, accSettings, folderName, piezo, this, pluginUtils);
 		accSettings.channel= "channel1";
 		//PiezoRun2 piezorun2 = new PiezoRun2 (accSettings, app_, pluginengine);	
@@ -1000,8 +1002,16 @@ public void setLabScannumber(String scanNo) {
 		verticalStrut_7 = Box.createVerticalStrut(20);
 		panel_2.add(verticalStrut_7);
 		
-		verticalStrut_10 = Box.createVerticalStrut(20);
-		panel_2.add(verticalStrut_10);
+//		tfPiezoCom = new JTextField();
+//		tfPiezoCom.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				piezo.InitializePiezoDevice(tfPiezoCom.getText());
+//			}
+//		});
+//		tfPiezoCom.setHorizontalAlignment(SwingConstants.CENTER);
+//		tfPiezoCom.setText("COM12");
+//		panel_2.add(tfPiezoCom);
+//		tfPiezoCom.setColumns(10);
 		
 		btnPiezoReset = new JButton("RESET");
 		panel_2.add(btnPiezoReset);
@@ -1009,7 +1019,7 @@ public void setLabScannumber(String scanNo) {
 			public void actionPerformed(ActionEvent e) {
 				
 				try {
-					mmc.setSerialPortCommand("Port", "WGO 1 0", "\n");
+					piezo.resetPiezo();
 					System.out.println("piezo reseted");
 				} catch (Exception e1) {
 					pluginUtils.errorDialog("error in piezo Reset");
@@ -2481,7 +2491,6 @@ public JButton getBtnStartLive() {
 public void setBtnStartLive(JButton btnStartLive) {
 	this.btnStartLive = btnStartLive;
 }
-
 }
 
 

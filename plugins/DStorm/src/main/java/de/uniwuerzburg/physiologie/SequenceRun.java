@@ -24,7 +24,12 @@ public class SequenceRun implements Runnable {
 	String camera = null;
 	private SequenceSettings settings=app_.acquisitions().getAcquisitionSettings();
 	private int curFrame =0;
+	private boolean running;
 	
+	public boolean isRunning() {
+		return running;
+	}
+
 	synchronized public int getCurFrame() {
 		return curFrame;
 	}
@@ -215,7 +220,7 @@ public class SequenceRun implements Runnable {
 	}
 	
 	public void run() {
-			
+			this.running=true;
 		try {
 
 			
@@ -271,7 +276,7 @@ public class SequenceRun implements Runnable {
 				// disk.
 				core_.stopSequenceAcquisition();
 				Thread.sleep(100);
-
+				this.running=false;
 //				store.close();
 //				store = null;
 				
