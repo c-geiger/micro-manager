@@ -18,13 +18,16 @@ public class CameraSelectionbox extends JComboBox<String> implements ActionListe
 	private StrVector cameras;
 	private PluginUtils pluginUtils;
 	private boolean setCamera;
+	private DstormPluginGui gui;
 	public CameraSelectionbox (){
 		this.addItem("DemoCamera");
 	}
 
-	public CameraSelectionbox(CMMCore core, PluginUtils pluginUtils, boolean setCamera, Studio studio) {
+	public CameraSelectionbox(CMMCore core, PluginUtils pluginUtils, boolean setCamera, Studio studio, DstormPluginGui gui) {
 		this.core=core;
 		this.studio=studio;
+		this.gui=gui;
+		this.setCamera=setCamera;
 		cameras=core.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
 		for(String camera : cameras){
 			this.addItem(camera);
@@ -53,6 +56,7 @@ public class CameraSelectionbox extends JComboBox<String> implements ActionListe
 			e1.printStackTrace();
 		}
 		}
+		else {System.out.println("setcamera");}
 		super.actionPerformed(e);
 	}
 public String setSelectedCamera(CameraSelectionbox liveCam){

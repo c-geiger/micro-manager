@@ -312,8 +312,9 @@ private JButton btnStartLiveScanCond;
 private JButton btnStartLiveEpiCond;
 private JButton btnStartLiveCalCond;
 private CameraSelectionbox cameraSelectionbox;
-private JLabel lblNewLabel_3;
+private JLabel labChooseCamera;
 private Component verticalStrut_10;
+private Component verticalStrut_21;
 public JProgressBar getProgressBar() {
 	return progressBar;
 }
@@ -853,24 +854,32 @@ public void setLabScannumber(String scanNo) {
 				tfImageSize = new JTextField();
 				tfImageSize.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						
-						cameras=app_.getCMMCore().getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+						String cameraLive=mmc.getCameraDevice();
+						accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
+						cameras=mmc.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+						boolean live =studio.live().getIsLiveModeOn();
+						if (live){studio.live().setLiveMode(false);}
 						for(String camera : cameras){
-							
-							accSettings.imageSizeS=Integer.parseInt(tfImageSize.getText());
 							int roi = accSettings.imageSizeS;
 							int roiBorderx = 256 -(roi/2);
 							int roibordery = 256 -(roi/2);
 							try {
-								app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
-							} catch (Exception e1) {
+								mmc.setROI(camera,roiBorderx,roibordery,roi,roi);
+								} catch (Exception e1) {
 								System.out.println("could not set Roi");
 								e1.printStackTrace();
 							}
 						}
+							try {
+								mmc.setCameraDevice(cameraLive);
+							} catch (Exception e1) {
+								pluginUtils.errorDialog("Could not set camera " + cameraLive);								e1.printStackTrace();
+							}
+							if (live){studio.live().setLiveMode(true);}
+							
+							}
 						
-
-					}
+					
 				});
 				tfImageSize.setBackground(Color.WHITE);
 				tfImageSize.setText("512");
@@ -908,10 +917,10 @@ public void setLabScannumber(String scanNo) {
 				verticalStrut_12 = Box.createVerticalStrut(20);
 				CannelSelection.add(verticalStrut_12);
 				
-				lblNewLabel_3 = new JLabel("choose camera");
-				CannelSelection.add(lblNewLabel_3);
+				labChooseCamera = new JLabel("choose camera");
+				CannelSelection.add(labChooseCamera);
 				
-				cameraSelectionbox = new CameraSelectionbox(mmc, pluginUtils, true, app_);
+				cameraSelectionbox = new CameraSelectionbox(mmc, pluginUtils, true, app_,this);
 				CannelSelection.add(cameraSelectionbox);
 				
 				verticalStrut_18 = Box.createVerticalStrut(20);
@@ -1027,6 +1036,9 @@ public void setLabScannumber(String scanNo) {
 				
 			}
 		});
+		
+		verticalStrut_21 = Box.createVerticalStrut(20);
+		panel_2.add(verticalStrut_21);
 		
 		label_2 = new JLabel("");
 		label_2.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")));
@@ -1314,6 +1326,7 @@ public void setLabScannumber(String scanNo) {
 		btnStartLiveScanCond.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
+				if (studio.live().getIsLiveModeOn()){studio.live().setLiveMode(false);}
 				cameraSelectionbox1.setSelectedCamera(cameraSelectionbox1);
 				try {
 					mmc.setExposure(Double.parseDouble(tfExpScan.getText()));
@@ -1561,7 +1574,7 @@ public void setLabScannumber(String scanNo) {
 		lblNewLabel_2 = new JLabel("ScanCamera");
 		panScanSet.add(lblNewLabel_2);
 		
-		cameraSelectionbox1 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
+		cameraSelectionbox1 = new CameraSelectionbox(mmc, pluginUtils, false, app_,this);
 		panScanSet.add(cameraSelectionbox1);
 		
 		
@@ -1718,7 +1731,7 @@ public void setLabScannumber(String scanNo) {
 		btnStartLiveBeadsCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
 		btnStartLiveBeadsCond.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+				if (studio.live().getIsLiveModeOn()){studio.live().setLiveMode(false);}
 				cameraSelectionbox2.setSelectedCamera(cameraSelectionbox2);
 				try {
 					mmc.setExposure(Double.parseDouble(tfExpBeads.getText()));
@@ -1827,7 +1840,7 @@ public void setLabScannumber(String scanNo) {
 		lblBeads = new JLabel("BeadsCamera");
 		panBeadsSet.add(lblBeads);
 		
-		cameraSelectionbox2 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
+		cameraSelectionbox2 = new CameraSelectionbox(mmc, pluginUtils, false, app_,this);
 		panBeadsSet.add(cameraSelectionbox2);
 		
 		buttonStartPosBefore.addActionListener(new ActionListener() {
@@ -1938,6 +1951,7 @@ public void setLabScannumber(String scanNo) {
 		btnStartLiveEpiCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
 		btnStartLiveEpiCond.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if (studio.live().getIsLiveModeOn()){studio.live().setLiveMode(false);}
 				cameraSelectionbox3.setSelectedCamera(cameraSelectionbox3);
 				try {
 					mmc.setExposure(Double.parseDouble(tfExpEpi.getText()));
@@ -2041,7 +2055,7 @@ public void setLabScannumber(String scanNo) {
 		lblNewLabel_1 = new JLabel("EpiCamera");
 		panel_5.add(lblNewLabel_1);
 		
-		cameraSelectionbox3 = new CameraSelectionbox(mmc, pluginUtils, false,app_);
+		cameraSelectionbox3 = new CameraSelectionbox(mmc, pluginUtils, false,app_,this);
 		panel_5.add(cameraSelectionbox3);
 		
 		JPanel Calibration_1 = new JPanel();
@@ -2161,6 +2175,7 @@ public void setLabScannumber(String scanNo) {
 		btnStartLiveCalCond.setIcon(new ImageIcon(DstormPluginGui.class.getResource("/de/uniwuerzburg/physiologie/resources/camera_go.png")));
 		btnStartLiveCalCond.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if (studio.live().getIsLiveModeOn()){studio.live().setLiveMode(false);}
 				cameraSelectionbox4.setSelectedCamera(cameraSelectionbox4);
 				try {
 					mmc.setExposure(Double.parseDouble(tfExpCal.getText()));
@@ -2414,7 +2429,7 @@ public void setLabScannumber(String scanNo) {
 						lblNewLabel = new JLabel("select camera");
 						settingsCal.add(lblNewLabel);
 						
-						cameraSelectionbox4 = new CameraSelectionbox(mmc, pluginUtils, false, app_);
+						cameraSelectionbox4 = new CameraSelectionbox(mmc, pluginUtils, false, app_,this);
 						settingsCal.add(cameraSelectionbox4);
 						
 				//abhängiges textfeld
