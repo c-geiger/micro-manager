@@ -757,6 +757,8 @@ public void setLabScannumber(String scanNo) {
 		        try { 	
 		        	setLblScanRunning("reset");
 		        	accSettings.clearAccSettings();
+		        	System.out.println(org.micromanager.internal.MMStudio.clearlists());
+		        	pluginEngine.counterReset();
 		        	root=tfPathstem.getText();
 		        	prefix=tfFilestem.getText();
 		        	accSettings.prefix= prefix;
@@ -1314,6 +1316,7 @@ public void setLabScannumber(String scanNo) {
 		btnStop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				accSettings.stopRecording=true;
+				
 				 }
 		});
 		

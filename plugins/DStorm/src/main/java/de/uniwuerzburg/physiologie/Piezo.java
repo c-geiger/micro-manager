@@ -31,7 +31,11 @@ public class Piezo {
 		private double upperStart;
 		
 		private double lowerStart;
-		
+		private double aktPosZ;
+		public double getAktPosZ() {
+			return aktPosZ;
+		}
+
 		private int scanNumber;
 		private int outputCycles;
 		private String outputCyclesS;
@@ -488,6 +492,7 @@ public class Piezo {
 	 // reset piezo
 	public void resetPiezo(){
 		try {
+			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");
 			mmc.setSerialPortCommand("Port", "WGO 1 1 ", "\n");	
 			mmc.setSerialPortCommand("Port", "WGO 1 0 ", "\n");	
 			
@@ -500,7 +505,7 @@ public class Piezo {
 			e.printStackTrace();
 		}
 		
-		clearPiezoAnswerBuffer();
+		//clearPiezoAnswerBuffer();
 		
 		
 		
@@ -509,15 +514,10 @@ public class Piezo {
 	public void clearPiezoAnswerBuffer(){
 		try {
 			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
-			mmc.getSerialPortAnswer("Port","\n");
+//			for (int v=0;v<6;v++){
+//			mmc.getSerialPortAnswer("Port","\n");
+//			Thread.sleep(100);
+//			}
 		} catch (Exception e) {
 			System.out.println("piezo reset provoked error");
 			e.printStackTrace();
@@ -592,7 +592,7 @@ public void initializePiezoRun(){
 	System.out.println("completed output cycle number ," + outputcycleIDOld);
 }
 //direction "upwards"/"downwards"
-public void initializePiezoScan(String direction){
+public int initializePiezoScan(String direction){
 	double startPos=100.0;
 	if (direction.equals("upwards")){startPos=upperStart;}
 	if (direction.equals("downwards")){startPos=lowerStart;}
@@ -604,8 +604,10 @@ public void initializePiezoScan(String direction){
 	waitForArriving();
 	sleep(50);
 	tempPosz =retrieveZPos();
+	pluginUtils.wait(50);
+	aktPosZ=tempPosz;
 	gui.refreshGuiElements(tempPosz, null);
-	System.out.println("reached" + direction + " scan start position");
+	System.out.println("reached " + direction + " scan start position");
 	setPiezoWavetableParametres(direction, wavetableID, segmentLength, cycleDistance);
 	try {
 		pluginUtils.waitTenSeconds(direction +": " + scannumberindex);
@@ -615,9 +617,11 @@ public void initializePiezoScan(String direction){
 	}
 	resetPiezo();
 	System.out.println("ready for "+ direction + "-scan");
-	setWavegeneratorStartStopMode(258);
 	outputCycleID = retrieveOutputcycleID();
-	outputcycleIDOld=outputCycleID;
+	setWavegeneratorStartStopMode(258);
+	return outputCycleID;
+	//pluginUtils.wait(200);
+	
 }
 // write first frame of position array; direction "upwards"/"downwards"
 public void writePosArrayFirstFrame(String direction){
@@ -638,7 +642,7 @@ public void writePosArrayFrames(String direction, int outputCycleID ){
 			positionarray[arrayindex][3] = String.valueOf(tempPosz);
 			arrayindex++;
 			gui.refreshGuiElements(tempPosz, null);
-			outputcycleIDOld = outputCycleID;
+			
 		}
 	
 
@@ -687,13 +691,12 @@ public boolean initializePiezoVariables(){
 		
 		outputCycles = frames / segmentLength;
 		cycleDistance = scanDistance / outputCycles;
-		System.out.println("upperstart position" + upperStart);
 		scanNumber = accSettings.noScansS;
 		setNoSettings(true);
 		positionArrayLength = (((frames / (recordedOCFraction * 20)) + 1) * scanNumber * 2);
 		positionarray = new String[positionArrayLength][4];
 		arrayindex=0;
-	};
+	}
 	if (accSettings.recordingParadigm.equals("Cal")){
 		frames = (int) accSettings.framesPScanCal;
 		scanDistance = accSettings.scanDepthCal;

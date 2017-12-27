@@ -22,6 +22,8 @@ import mmcorej.StrVector;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -49,6 +51,11 @@ public class PluginEngine {
 	private int outputcycleIDOld;
 	private int recordedOCFraction=5;
 	private boolean running;
+	private int scanCounter=0;
+	private int epiCounter=0;
+	private int beforeCounter=0;
+	private int afterCounter=0;
+	private int calCounter=0;
 
 
 	public PluginEngine(Studio app, AccessorySequenceSettings accSettings, FolderName folderName, Piezo piezo, DstormPluginGui gui, PluginUtils pluginUtils) {
@@ -67,9 +74,7 @@ public class PluginEngine {
 
 
 	public void runSequenceScanacquisition(){
-		MMStudio.clearListD();
-		MMStudio.clearListI();
-		MMStudio.clearListS();
+		scanCounter++;
 		int progress=1;
 		scanNumber=accSettings.noScansS;
 		piezo.InitializePiezoDevice();
@@ -77,6 +82,7 @@ public class PluginEngine {
 		piezo.initializePiezoRun();
 		int scannumberindex = 0;
 		outputCycles=piezo.getPiezoOutputcycles();
+		System.out.println("ocs "+ outputCycles);
 		
 		progressbar.setVisible(true);
 		progressbar.setMaximum(scanNumber*2);
@@ -87,30 +93,40 @@ public class PluginEngine {
 				piezo.setScannumberindex(scannumberindex);
 				//upscan
 				direction="upwards";
-				MMStudio.setDirection(direction +"  " + String.valueOf(scannumberindex + 1));
-				piezo.initializePiezoScan(direction);
+				MMStudio.addListD(direction);
+				MMStudio.addListRP(accSettings.recordingParadigm + "_" + scanCounter);
+				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				
+				outputCycleID = piezo.initializePiezoScan(direction);
+				MMStudio.addListStartPosition(String.valueOf(piezo.getAktPosZ()));
+				outputcycleIDOld = outputCycleID;
 				new Thread(new Runnable() {
+					
+
 					@Override
 					public void run() {
 						sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
 						piezo.setSequenceRun(sequenceRun);
+						setSequenceRun(sequenceRun);
 						sequenceRun.run();
 					}
 				}).start();
 
 				piezo.writePosArrayFirstFrame(direction);
-				outputCycleID = piezo.retrieveOutputcycleID();
-				outputcycleIDOld = outputCycleID;
+				System.out.println("printed first frame "+ outputCycleID);
+				//outputCycleID = piezo.retrieveOutputcycleID();
+				
 				upscanloop: do {
 					//wait until imagerecording starts
-					do{
-					running=sequenceRun.isRunning();
-					}while(!running);
+//					do{
+//					this.running=pluginUtils.isRunning();
+//					}while(!running);
 					
 					if (accSettings.stopRecording) {
 						break scanloop;
 					}
 					outputCycleID = piezo.retrieveOutputcycleID();
+					System.out.println("current outputID "+ outputCycleID);
 					try {
 						Thread.sleep(50);
 					} catch (InterruptedException e) {
@@ -118,7 +134,8 @@ public class PluginEngine {
 						e.printStackTrace();
 					}
 					
-					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					if (outputcycleIDOld < outputCycleID && (outputCycleID % recordedOCFraction == 0)) {
+						System.out.println("printed follow "+ outputCycleID);
 					piezo.writePosArrayFrames(direction,outputCycleID);
 					}
 					outputcycleIDOld = outputCycleID;
@@ -126,7 +143,8 @@ public class PluginEngine {
 				} while (outputCycleID < outputCycles);
 				progressbar.setValue(progress);
 				progress++;
-				
+				MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				MMStudio.addListStopPosition(String.valueOf(piezo.retrieveZPos()));
 
 				
 				do{
@@ -145,34 +163,39 @@ public class PluginEngine {
 				}
 				//downscan
 				direction="downwards";
-				MMStudio.setDirection(direction +"  " + String.valueOf(scannumberindex + 1));
-				piezo.initializePiezoScan(direction);
+				MMStudio.addListD(direction);
+				MMStudio.addListRP(accSettings.recordingParadigm + "_" + scanCounter);
+				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				
+				outputCycleID = piezo.initializePiezoScan(direction);
+				MMStudio.addListStartPosition(String.valueOf(piezo.getAktPosZ()));
+				outputcycleIDOld = outputCycleID;
 				new Thread(new Runnable() {
+					
+
 					@Override
 					public void run() {
-
-						SequenceRun sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
-
+						sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
 						piezo.setSequenceRun(sequenceRun);
-
+						setSequenceRun(sequenceRun);
 						sequenceRun.run();
 					}
 				}).start();
 
 				piezo.writePosArrayFirstFrame(direction);
-				outputCycleID = piezo.retrieveOutputcycleID();
-				outputcycleIDOld = outputCycleID;
+				System.out.println("printed first frame "+ outputCycleID);
 				
 				downscanloop: do {
 					//wait until imagerecording starts
-					do{
-					running=sequenceRun.isRunning();
-					}while(!running);
+//					do{
+//					this.running=pluginUtils.isRunning();
+//					}while(!running);
 					
 					if (accSettings.stopRecording) {
 						break scanloop;
 					}
 					outputCycleID = piezo.retrieveOutputcycleID();
+					System.out.println("current outputID "+ outputCycleID);
 					try {
 						Thread.sleep(50);
 					} catch (InterruptedException e) {
@@ -180,7 +203,8 @@ public class PluginEngine {
 						e.printStackTrace();
 					}
 					
-					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					if (outputcycleIDOld < outputCycleID && (outputCycleID % recordedOCFraction == 0)) {
+						System.out.println("printed follow "+ outputCycleID);
 					piezo.writePosArrayFrames(direction,outputCycleID);
 					}
 					outputcycleIDOld = outputCycleID;
@@ -188,6 +212,9 @@ public class PluginEngine {
 				} while (outputCycleID < outputCycles);
 				progressbar.setValue(progress);
 				progress++;
+				MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				MMStudio.addListStopPosition(String.valueOf(piezo.retrieveZPos()));
+				
 				do{
 					try {
 						Thread.sleep(100);
@@ -202,6 +229,7 @@ public class PluginEngine {
 					System.out.println("error in wait");
 					e.printStackTrace();
 				}
+				
 			}
 		if (accSettings.stopRecording) {
 			stopRecording();
@@ -247,6 +275,7 @@ public class PluginEngine {
 
 
 	public void runSequenceCalacquisition(){
+		calCounter++;
 		piezo.setScannumberindex(42);
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
@@ -256,7 +285,12 @@ public class PluginEngine {
 
 		
 				direction="calibration";
+				MMStudio.addListD(direction);
+				MMStudio.addListRP(accSettings.recordingParadigm + "_" + calCounter);
+				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				
 				piezo.initializePiezoScan(direction);
+				MMStudio.addListStartPosition(String.valueOf(piezo.getAktPosZ()));
 				
 				new Thread(new Runnable() {
 					@Override
@@ -294,7 +328,8 @@ public class PluginEngine {
 					
 				} while (outputCycleID < outputCycles);
 
-				
+				MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				MMStudio.addListStopPosition(String.valueOf(piezo.retrieveZPos()));
 					
 					
 
@@ -306,6 +341,7 @@ public class PluginEngine {
 		else {
 			try {
 				ZPositionArrayWriter.save(piezo.getPositionarray(), accSettings.calPositionarrayPath);
+				FileListWriter.save(accSettings.filenamearrayPath);
 				System.out.println("positionarray saving succesfull");
 			} catch (IOException e) {
 				System.out.println("writing positionarray failed");
@@ -326,12 +362,26 @@ public class PluginEngine {
 	
 	
 	public void runSequenceBeadsBeforeacquisition(){
+		beforeCounter++;
+		direction="none";
+		MMStudio.addListD(direction);
+		MMStudio.addListRP(accSettings.recordingParadigm+ "_" + beforeCounter);
+		MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+		MMStudio.addListStartPosition(String.valueOf(piezo.retrieveZPos()));
 		sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
 		sequenceRun.run();	
+		MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+		MMStudio.addListStopPosition(String.valueOf(piezo.retrieveZPos()));
 		try {
 			accSettings.save(accSettings.metadataPath);
 		} catch (IOException e) {
 			pluginUtils.errorDialog("could not write metadata");
+			e.printStackTrace();
+		}
+		try {
+			FileListWriter.save(accSettings.filenamearrayPath);
+		} catch (IOException e) {
+			pluginUtils.errorDialog("could not write FileList");
 			e.printStackTrace();
 		}
 		gui.setLblScanRunning("finished");
@@ -339,12 +389,26 @@ public class PluginEngine {
 	};
 	
 	public void runSequenceBeadsAfteracquisition(){
+		afterCounter++;
+		direction="none";
+		MMStudio.addListD(direction);
+		MMStudio.addListRP(accSettings.recordingParadigm + "_" + afterCounter);
+		MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+		MMStudio.addListStartPosition(String.valueOf(piezo.retrieveZPos()));
 		sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
 		sequenceRun.run();
+		MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+		MMStudio.addListStopPosition(String.valueOf(piezo.retrieveZPos()));
 		try {
 			accSettings.save(accSettings.metadataPath);
 		} catch (IOException e) {
 			pluginUtils.errorDialog("could not write metadata");
+			e.printStackTrace();
+		}
+		try {
+			FileListWriter.save(accSettings.filenamearrayPath);
+		} catch (IOException e) {
+			pluginUtils.errorDialog("could not write FileList");
 			e.printStackTrace();
 		}
 		gui.setLblScanRunning("finished");
@@ -361,392 +425,392 @@ public class PluginEngine {
 		}
 	};	
 	
-	public void runDstormAcquisition() {
-
-
-
-		StorageMultipageTiff.setShouldGenerateMetadataFile(false);
-		boolean shouldgeneratemetadatafile=StorageMultipageTiff.getShouldGenerateMetadataFile();
-		System.out.println("write metadata file: "+shouldgeneratemetadatafile);
-
-
-		app_.acquisitions().clearRunnables();
-		app_.getAcquisitionManager().clearRunnables();
-
-		try {
-			folderName.createScanPath();
-		} catch (Exception e1) {
-			System.out.println ("filemaker error");
-			e1.printStackTrace();
-		}
-
-		//labStorPathScan.setForeground(Color.BLACK);
-
-
-		/*
-		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
-		 */
-
-		//String zDevice = app_.getCMMCore().getFocusDevice();
-
-		//this.settings = app_.acquisitions().getAcquisitionSettings();
-
-		settings.useCustomIntervals = false;
-		settings.intervalMs = 0;
-
-		MMStudio.USE_CUSTOM_PATH=true;
-		MMStudio.CUSTOM_FILE_NAME = accSettings.scanFilename;
-		MMStudio.CUSTOM_PATH_NAME = accSettings.scanPathname;
-		System.out.println ("accsettings file "+ accSettings.scanFilename);
-		System.out.println ("accsettings path "+ accSettings.scanPathname);
-
-		settings.cameraTimeout = 2000 ;
-
-		settings.numFrames = (int)accSettings.framesPScanS;
-		System.out.println ("frames "+ settings.numFrames );
-		String camera = app_.getCMMCore().getCameraDevice();
-		int roi = accSettings.imageSizeS;
-		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);
-		try {
-			app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
-		} catch (Exception e1) {
-			System.out.println("could not set Roi");
-			e1.printStackTrace();
-		}
-
-
-
-
-		try {
-
-			core.setExposure(accSettings.expS);
-
-
-			app_.acquisitions().runAcquisitionWithSettings(settings, false);
-
-			final File metadatafile = new File(accSettings.metadataPath);
-			if(!metadatafile.isFile())
-				accSettings.save(accSettings.metadataPath);
-			System.out.println("metadatafile stored");
-		} catch (Exception e) {
-			System.out.println("error in storing metadatafile");
-			e.printStackTrace();
-
-		}
-
-
-	};
-
-
-	public void runDstormEpiAcquisition() {
-		//double der = accSettings.scanDepthCal;
-		app_.acquisitions().clearRunnables();
-		app_.getAcquisitionManager().clearRunnables();
-
-
-		/*
-		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
-		 */
-
-		//String zDevice = app_.getCMMCore().getFocusDevice();
-
-		this.settings = app_.acquisitions().getAcquisitionSettings();
-		settings.save=false;
-		settings.useCustomIntervals = false;
-		settings.intervalMs = 0;
-		MMStudio.USE_CUSTOM_PATH=true;
-		MMStudio.CUSTOM_FILE_NAME = accSettings.epiFilename;
-		MMStudio.CUSTOM_PATH_NAME = accSettings.epiPathname;
-		System.out.println ("accsettings file "+ accSettings.epiFilename);
-		System.out.println ("accsettings path "+ accSettings.epiPathname);
-		//int numFrames = 1;
-		settings.numFrames = (int)accSettings.framesPScanS;
-		String camera = app_.getCMMCore().getCameraDevice();
-		int roi = accSettings.imageSizeS;
-		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);;
-		try {
-			app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		//enoughDiskSpace(roi, roi, settings.numFrames);
-		//		double dist = 1;
-		//		double begin = 100;
-		//		double tempPos = 0;
-		//		double movingstep = dist / numFrames;
-		//		double zPosStart = 100.0;
-		//		int roi = 400;
-		//		int roiBorderx = 256 -(roi/2);
-		//		int roibordery = 256 -(roi/2);;
-		try {
-			//			app_.getCMMCore().setPosition(zDevice, zPosStart);
-			//
-			//			aktZPos = app_.getCMMCore().getPosition(zDevice);
-			//			System.out.println("boogie");
-
-			app_.getCMMCore().setExposure(accSettings.expS);
-
-			//			Runnable runnable = new Runnable() {
-			//				int count = 1;
-			//
-			//				public void run() {
-			//					try {
-			//						double zPosTemp = zPosStart + (count * movingstep);
-			//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
-			//						if (count % 100 == 0) {
-			//							
-			//								aktZPos = app_.getCMMCore().getPosition(zDevice);
-			//							
-			//							System.out.println(aktZPos);
-			//						}
-			//
-			//						++count;
-			//					} catch (Exception e) {
-			//						// TODO Auto-generated catch block
-			//						e.printStackTrace();
-			//					}
-			//				}
-			//			};
-			//
-			//			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
-
-			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
-
-			System.out.println(store);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
-		}
-	};	
-
-	public void runDstormBeforeBeadsAcquisition() {
-
-		app_.acquisitions().clearRunnables();
-		app_.getAcquisitionManager().clearRunnables();
-
-		/*
-		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
-		 */
-
-		String zDevice = app_.getCMMCore().getFocusDevice();
-
-		this.settings = app_.acquisitions().getAcquisitionSettings();
-
-		settings.useCustomIntervals = false;
-		settings.intervalMs = 0;
-		MMStudio.USE_CUSTOM_PATH=true;
-		MMStudio.CUSTOM_FILE_NAME = accSettings.beadsBeforeFilename;
-		MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
-		System.out.println ("accsettings file "+ accSettings.beadsBeforeFilename);
-		System.out.println ("accsettings path "+ accSettings.beadsPathname);
-		int numFrames = 50;
-		settings.numFrames = numFrames;
-
-		double dist = 1;
-		double begin = 100;
-		double tempPos = 0;
-		double movingstep = dist / numFrames;
-		double zPosStart = 100.0;
-		int roi = 400;
-		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);;
-		try {
-			app_.getCMMCore().setPosition(zDevice, zPosStart);
-
-			aktZPos = app_.getCMMCore().getPosition(zDevice);
-			System.out.println("boogie");
-
-			app_.getCMMCore().setExposure(10);
-
-			Runnable runnable = new Runnable() {
-				int count = 1;
-
-				public void run() {
-					try {
-						double zPosTemp = zPosStart + (count * movingstep);
-						app_.getCMMCore().setPosition(zDevice, zPosTemp);
-						if (count % 100 == 0) {
-
-							aktZPos = app_.getCMMCore().getPosition(zDevice);
-
-							System.out.println(aktZPos);
-						}
-
-						++count;
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-
-			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
-
-			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
-
-			System.out.println(store);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
-		}
-	}
-
-
-	public void runDstormAfterBeadsAcquisition() {
-
-		app_.acquisitions().clearRunnables();
-		app_.getAcquisitionManager().clearRunnables();
-
-		/*
-		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
-		 */
-
-		String zDevice = app_.getCMMCore().getFocusDevice();
-
-		this.settings = app_.acquisitions().getAcquisitionSettings();
-
-		settings.useCustomIntervals = false;
-		settings.intervalMs = 0;
-		MMStudio.USE_CUSTOM_PATH=true;
-		MMStudio.CUSTOM_FILE_NAME = accSettings.beadsAfterFilename;
-		MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
-		System.out.println ("accsettings file "+ accSettings.beadsAfterFilename);
-		System.out.println ("accsettings path "+ accSettings.beadsPathname);
-		int numFrames = 50;
-		settings.numFrames = numFrames;
-
-		double dist = 1;
-		double begin = 100;
-		double tempPos = 0;
-		double movingstep = dist / numFrames;
-		double zPosStart = 100.0;
-		int roi = 400;
-		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);;
-		try {
-			app_.getCMMCore().setPosition(zDevice, zPosStart);
-
-			aktZPos = app_.getCMMCore().getPosition(zDevice);
-			System.out.println("boogie");
-
-			app_.getCMMCore().setExposure(10);
-
-			Runnable runnable = new Runnable() {
-				int count = 1;
-
-				public void run() {
-					try {
-						double zPosTemp = zPosStart + (count * movingstep);
-						app_.getCMMCore().setPosition(zDevice, zPosTemp);
-						if (count % 100 == 0) {
-
-							aktZPos = app_.getCMMCore().getPosition(zDevice);
-
-							System.out.println(aktZPos);
-						}
-
-						++count;
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-
-			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
-
-			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
-
-			System.out.println(store);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
-		}
-	}
-
-	public void runDstormCalAcquisition() {
-
-		app_.acquisitions().clearRunnables();
-		app_.getAcquisitionManager().clearRunnables();
-		String camera = app_.getCMMCore().getCameraDevice();
-		/*
-		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
-		 */
-
-		String zDevice = app_.getCMMCore().getFocusDevice();
-
-		this.settings = app_.acquisitions().getAcquisitionSettings();
-
-		settings.useCustomIntervals = false;
-		settings.intervalMs = 0;
-		MMStudio.USE_CUSTOM_PATH=true;
-		MMStudio.CUSTOM_FILE_NAME = accSettings.calFilename;
-		MMStudio.CUSTOM_PATH_NAME = accSettings.calPathname;
-		System.out.println ("accsettings file "+ accSettings.calFilename);
-		System.out.println ("accsettings path "+ accSettings.calPathname);
-		int numFrames = 100;
-		settings.numFrames = numFrames;
-
-		double dist = 1;
-		double begin = 100;
-		double tempPos = 0;
-		double movingstep = dist / numFrames;
-		double zPosStart = 100.0;
-		int roi = 400;
-		int roiBorderx = 256 -(roi/2);
-		int roibordery = 256 -(roi/2);;
-
-
-		try {
-
-			app_.getCMMCore().setPosition(zDevice, zPosStart);
-
-			aktZPos = app_.getCMMCore().getPosition(zDevice);
-			System.out.println("boogie");
-
-			app_.getCMMCore().setExposure(10);
-
-			Runnable runnable = new Runnable() {
-				int count = 1;
-
-				public void run() {
-					try {
-						double zPosTemp = zPosStart + (count * movingstep);
-						app_.getCMMCore().setPosition(zDevice, zPosTemp);
-						if (count % 100 == 0) {
-
-							aktZPos = app_.getCMMCore().getPosition(zDevice);
-
-							System.out.println(aktZPos);
-						}
-
-						++count;
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-
-			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
-
-			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
-
-			System.out.println(store);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
-		}
-	};
-
-
+//	public void runDstormAcquisition() {
+//
+//
+//
+//		StorageMultipageTiff.setShouldGenerateMetadataFile(false);
+//		boolean shouldgeneratemetadatafile=StorageMultipageTiff.getShouldGenerateMetadataFile();
+//		System.out.println("write metadata file: "+shouldgeneratemetadatafile);
+//
+//
+//		app_.acquisitions().clearRunnables();
+//		app_.getAcquisitionManager().clearRunnables();
+//
+//		try {
+//			folderName.createScanPath();
+//		} catch (Exception e1) {
+//			System.out.println ("filemaker error");
+//			e1.printStackTrace();
+//		}
+//
+//		//labStorPathScan.setForeground(Color.BLACK);
+//
+//
+//		/*
+//		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+//		 */
+//
+//		//String zDevice = app_.getCMMCore().getFocusDevice();
+//
+//		//this.settings = app_.acquisitions().getAcquisitionSettings();
+//
+//		settings.useCustomIntervals = false;
+//		settings.intervalMs = 0;
+//
+//		MMStudio.USE_CUSTOM_PATH=true;
+//		MMStudio.CUSTOM_FILE_NAME = accSettings.scanFilename;
+//		MMStudio.CUSTOM_PATH_NAME = accSettings.scanPathname;
+//		System.out.println ("accsettings file "+ accSettings.scanFilename);
+//		System.out.println ("accsettings path "+ accSettings.scanPathname);
+//
+//		settings.cameraTimeout = 2000 ;
+//
+//		settings.numFrames = (int)accSettings.framesPScanS;
+//		System.out.println ("frames "+ settings.numFrames );
+//		String camera = app_.getCMMCore().getCameraDevice();
+//		int roi = accSettings.imageSizeS;
+//		int roiBorderx = 256 -(roi/2);
+//		int roibordery = 256 -(roi/2);
+//		try {
+//			app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
+//		} catch (Exception e1) {
+//			System.out.println("could not set Roi");
+//			e1.printStackTrace();
+//		}
+//
+//
+//
+//
+//		try {
+//
+//			core.setExposure(accSettings.expS);
+//
+//
+//			app_.acquisitions().runAcquisitionWithSettings(settings, false);
+//
+//			final File metadatafile = new File(accSettings.metadataPath);
+//			if(!metadatafile.isFile())
+//				accSettings.save(accSettings.metadataPath);
+//			System.out.println("metadatafile stored");
+//		} catch (Exception e) {
+//			System.out.println("error in storing metadatafile");
+//			e.printStackTrace();
+//
+//		}
+//
+//
+//	};
+//
+//
+//	public void runDstormEpiAcquisition() {
+//		//double der = accSettings.scanDepthCal;
+//		app_.acquisitions().clearRunnables();
+//		app_.getAcquisitionManager().clearRunnables();
+//
+//
+//		/*
+//		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+//		 */
+//
+//		//String zDevice = app_.getCMMCore().getFocusDevice();
+//
+//		this.settings = app_.acquisitions().getAcquisitionSettings();
+//		settings.save=false;
+//		settings.useCustomIntervals = false;
+//		settings.intervalMs = 0;
+//		MMStudio.USE_CUSTOM_PATH=true;
+//		MMStudio.CUSTOM_FILE_NAME = accSettings.epiFilename;
+//		MMStudio.CUSTOM_PATH_NAME = accSettings.epiPathname;
+//		System.out.println ("accsettings file "+ accSettings.epiFilename);
+//		System.out.println ("accsettings path "+ accSettings.epiPathname);
+//		//int numFrames = 1;
+//		settings.numFrames = (int)accSettings.framesPScanS;
+//		String camera = app_.getCMMCore().getCameraDevice();
+//		int roi = accSettings.imageSizeS;
+//		int roiBorderx = 256 -(roi/2);
+//		int roibordery = 256 -(roi/2);;
+//		try {
+//			app_.getCMMCore().setROI(camera,roiBorderx,roibordery,roi,roi);
+//		} catch (Exception e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		//enoughDiskSpace(roi, roi, settings.numFrames);
+//		//		double dist = 1;
+//		//		double begin = 100;
+//		//		double tempPos = 0;
+//		//		double movingstep = dist / numFrames;
+//		//		double zPosStart = 100.0;
+//		//		int roi = 400;
+//		//		int roiBorderx = 256 -(roi/2);
+//		//		int roibordery = 256 -(roi/2);;
+//		try {
+//			//			app_.getCMMCore().setPosition(zDevice, zPosStart);
+//			//
+//			//			aktZPos = app_.getCMMCore().getPosition(zDevice);
+//			//			System.out.println("boogie");
+//
+//			app_.getCMMCore().setExposure(accSettings.expS);
+//
+//			//			Runnable runnable = new Runnable() {
+//			//				int count = 1;
+//			//
+//			//				public void run() {
+//			//					try {
+//			//						double zPosTemp = zPosStart + (count * movingstep);
+//			//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
+//			//						if (count % 100 == 0) {
+//			//							
+//			//								aktZPos = app_.getCMMCore().getPosition(zDevice);
+//			//							
+//			//							System.out.println(aktZPos);
+//			//						}
+//			//
+//			//						++count;
+//			//					} catch (Exception e) {
+//			//						// TODO Auto-generated catch block
+//			//						e.printStackTrace();
+//			//					}
+//			//				}
+//			//			};
+//			//
+//			//			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
+//
+//			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
+//
+//			System.out.println(store);
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//
+//		}
+//	};	
+//
+//	public void runDstormBeforeBeadsAcquisition() {
+//
+//		app_.acquisitions().clearRunnables();
+//		app_.getAcquisitionManager().clearRunnables();
+//
+//		/*
+//		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+//		 */
+//
+//		String zDevice = app_.getCMMCore().getFocusDevice();
+//
+//		this.settings = app_.acquisitions().getAcquisitionSettings();
+//
+//		settings.useCustomIntervals = false;
+//		settings.intervalMs = 0;
+//		MMStudio.USE_CUSTOM_PATH=true;
+//		MMStudio.CUSTOM_FILE_NAME = accSettings.beadsBeforeFilename;
+//		MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
+//		System.out.println ("accsettings file "+ accSettings.beadsBeforeFilename);
+//		System.out.println ("accsettings path "+ accSettings.beadsPathname);
+//		int numFrames = 50;
+//		settings.numFrames = numFrames;
+//
+//		double dist = 1;
+//		double begin = 100;
+//		double tempPos = 0;
+//		double movingstep = dist / numFrames;
+//		double zPosStart = 100.0;
+//		int roi = 400;
+//		int roiBorderx = 256 -(roi/2);
+//		int roibordery = 256 -(roi/2);;
+//		try {
+//			app_.getCMMCore().setPosition(zDevice, zPosStart);
+//
+//			aktZPos = app_.getCMMCore().getPosition(zDevice);
+//			System.out.println("boogie");
+//
+//			app_.getCMMCore().setExposure(10);
+//
+//			Runnable runnable = new Runnable() {
+//				int count = 1;
+//
+//				public void run() {
+//					try {
+//						double zPosTemp = zPosStart + (count * movingstep);
+//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
+//						if (count % 100 == 0) {
+//
+//							aktZPos = app_.getCMMCore().getPosition(zDevice);
+//
+//							System.out.println(aktZPos);
+//						}
+//
+//						++count;
+//					} catch (Exception e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+//
+//			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
+//
+//			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
+//
+//			System.out.println(store);
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//
+//		}
+//	}
+//
+//
+//	public void runDstormAfterBeadsAcquisition() {
+//
+//		app_.acquisitions().clearRunnables();
+//		app_.getAcquisitionManager().clearRunnables();
+//
+//		/*
+//		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+//		 */
+//
+//		String zDevice = app_.getCMMCore().getFocusDevice();
+//
+//		this.settings = app_.acquisitions().getAcquisitionSettings();
+//
+//		settings.useCustomIntervals = false;
+//		settings.intervalMs = 0;
+//		MMStudio.USE_CUSTOM_PATH=true;
+//		MMStudio.CUSTOM_FILE_NAME = accSettings.beadsAfterFilename;
+//		MMStudio.CUSTOM_PATH_NAME = accSettings.beadsPathname;
+//		System.out.println ("accsettings file "+ accSettings.beadsAfterFilename);
+//		System.out.println ("accsettings path "+ accSettings.beadsPathname);
+//		int numFrames = 50;
+//		settings.numFrames = numFrames;
+//
+//		double dist = 1;
+//		double begin = 100;
+//		double tempPos = 0;
+//		double movingstep = dist / numFrames;
+//		double zPosStart = 100.0;
+//		int roi = 400;
+//		int roiBorderx = 256 -(roi/2);
+//		int roibordery = 256 -(roi/2);;
+//		try {
+//			app_.getCMMCore().setPosition(zDevice, zPosStart);
+//
+//			aktZPos = app_.getCMMCore().getPosition(zDevice);
+//			System.out.println("boogie");
+//
+//			app_.getCMMCore().setExposure(10);
+//
+//			Runnable runnable = new Runnable() {
+//				int count = 1;
+//
+//				public void run() {
+//					try {
+//						double zPosTemp = zPosStart + (count * movingstep);
+//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
+//						if (count % 100 == 0) {
+//
+//							aktZPos = app_.getCMMCore().getPosition(zDevice);
+//
+//							System.out.println(aktZPos);
+//						}
+//
+//						++count;
+//					} catch (Exception e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+//
+//			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
+//
+//			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
+//
+//			System.out.println(store);
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//
+//		}
+//	}
+//
+//	public void runDstormCalAcquisition() {
+//
+//		app_.acquisitions().clearRunnables();
+//		app_.getAcquisitionManager().clearRunnables();
+//		String camera = app_.getCMMCore().getCameraDevice();
+//		/*
+//		 * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+//		 */
+//
+//		String zDevice = app_.getCMMCore().getFocusDevice();
+//
+//		this.settings = app_.acquisitions().getAcquisitionSettings();
+//
+//		settings.useCustomIntervals = false;
+//		settings.intervalMs = 0;
+//		MMStudio.USE_CUSTOM_PATH=true;
+//		MMStudio.CUSTOM_FILE_NAME = accSettings.calFilename;
+//		MMStudio.CUSTOM_PATH_NAME = accSettings.calPathname;
+//		System.out.println ("accsettings file "+ accSettings.calFilename);
+//		System.out.println ("accsettings path "+ accSettings.calPathname);
+//		int numFrames = 100;
+//		settings.numFrames = numFrames;
+//
+//		double dist = 1;
+//		double begin = 100;
+//		double tempPos = 0;
+//		double movingstep = dist / numFrames;
+//		double zPosStart = 100.0;
+//		int roi = 400;
+//		int roiBorderx = 256 -(roi/2);
+//		int roibordery = 256 -(roi/2);;
+//
+//
+//		try {
+//
+//			app_.getCMMCore().setPosition(zDevice, zPosStart);
+//
+//			aktZPos = app_.getCMMCore().getPosition(zDevice);
+//			System.out.println("boogie");
+//
+//			app_.getCMMCore().setExposure(10);
+//
+//			Runnable runnable = new Runnable() {
+//				int count = 1;
+//
+//				public void run() {
+//					try {
+//						double zPosTemp = zPosStart + (count * movingstep);
+//						app_.getCMMCore().setPosition(zDevice, zPosTemp);
+//						if (count % 100 == 0) {
+//
+//							aktZPos = app_.getCMMCore().getPosition(zDevice);
+//
+//							System.out.println(aktZPos);
+//						}
+//
+//						++count;
+//					} catch (Exception e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+//
+//			app_.getAcquisitionManager().attachRunnable(-1, 0, 0, 0, runnable);
+//
+//			Datastore store = app_.acquisitions().runAcquisitionWithSettings(settings, false);
+//
+//			System.out.println(store);
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//
+//		}
+//	};
+//
+//
 
 	public void getStandardCamProps(){
 		try {
@@ -934,8 +998,8 @@ public class PluginEngine {
 
 	public void stopRecording(){
 		try {
-
-			sequenceRun.sequenceStop();
+			core.stopSequenceAcquisition();
+			//this.sequenceRun.sequenceStop();
 			piezo.stopPiezo();
 
 			System.out.println("Sequencestopped by user");
@@ -945,6 +1009,24 @@ public class PluginEngine {
 			e.printStackTrace();
 		}
 		accSettings.stopRecording = false;
+	}
+	
+	public void setSequenceRun(SequenceRun sequenceRun) {
+		this.sequenceRun = sequenceRun;
+	}
+
+
+
+	public void setTempPosz(double tempPosz) {
+		this.aktZPos =tempPosz; 
+		
+	}
+	public void counterReset(){
+	scanCounter=0;
+	epiCounter=0;
+	beforeCounter=0;
+	afterCounter=0;
+	calCounter=0;
 	}
 }
 

@@ -22,7 +22,9 @@ package org.micromanager.data.internal.multipagetiff;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
@@ -134,10 +136,11 @@ class FileSet {
 		// finished as they fill up with images
 		tiffWriters_.getLast().finish();
 		if(MMStudio.USE_CUSTOM_PATH){
+			
 			MMStudio.addListI(getCurrentFrame());
 			MMStudio.addListS(getCurrentFilename());
-			MMStudio.addListD(MMStudio.getDirection());
-			//StorageMultipageTiff.getNumImages();
+			
+			
 		}
 		// close all
 		for (MultipageTiffWriter w : tiffWriters_) {
@@ -173,7 +176,14 @@ class FileSet {
 			if(MMStudio.USE_CUSTOM_PATH){
 				MMStudio.addListI(getCurrentFrame());
 				MMStudio.addListS(getCurrentFilename());
-				MMStudio.addListD(MMStudio.getDirection());
+				MMStudio.addListStopPosition("none");
+				MMStudio.addListStopTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				int lastIndex = MMStudio.getListI().size()-1;
+				MMStudio.addListD(MMStudio.getListD().get(lastIndex));
+				MMStudio.addListRP(MMStudio.getListRP().get(lastIndex));
+				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+				MMStudio.addListStartPosition("none");
+				
 			}
 			currentTiffFilename_ = baseFilename_ + "_X" + tiffWriters_.size() + ".tif";
 			currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();

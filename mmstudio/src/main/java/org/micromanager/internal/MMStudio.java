@@ -185,19 +185,30 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private StaticInfo staticInfo_;
    //communication with MultipageTiff
-   private static String direction;
+//   private static String direction;
+//   public static void setDirection(String direction) {
+//	MMStudio.direction = direction;
+//   }
+//   public static String getDirection() {
+//	return direction;
+//   }
+
+  // private static String recordingParadigm;
+   public static String clearlists(){
+	   clearListD();
+	   clearListI();
+	   clearListRP();
+	   clearListS();
+	   clearListStartPosition();
+	   clearListStartTime();
+	   clearListStopPosition();
+	   clearListStopTime();
+	   
+	   return "lists cleared";
+   }
    
    
-   public static void setDirection(String direction) {
-	MMStudio.direction = direction;
-}
-public static String getDirection() {
-	return direction;
-}
-
-
-
-private static List<String> listD=new ArrayList<String>();
+   private static List<String> listD=new ArrayList<String>();
    public static List<String> getListD() {
 	return listD;
    }
@@ -208,6 +219,61 @@ private static List<String> listD=new ArrayList<String>();
 	   listD.clear();
    }
    
+   private static List<String> listRP=new ArrayList<String>();
+   public static List<String> getListRP() {
+	return listRP;
+   }
+   public static void addListRP(String mystring){
+	   listRP.add(mystring);
+   }
+   public static void clearListRP(){
+	   listRP.clear();
+   }
+   
+   private static List<String> listStartTime=new ArrayList<String>();
+   public static List<String> getListStartTime() {
+	return listStartTime;
+   }
+   public static void addListStartTime(String mystring){
+	   listStartTime.add(mystring);
+   }
+   public static void clearListStartTime(){
+	   listStartTime.clear();
+   }
+   
+   private static List<String> listStopTime=new ArrayList<String>();
+   public static List<String> getListStopTime() {
+	return listStopTime;
+   }
+   public static void addListStopTime(String mystring){
+	   listStopTime.add(mystring);
+   }
+   public static void clearListStopTime(){
+	   listStopTime.clear();
+   }
+
+ private static List<String> listStartPosition=new ArrayList<String>();
+   public static List<String> getListStartPosition() {
+	return listStartPosition;
+   }
+   public static void addListStartPosition(String mystring){
+	   listStartPosition.add(mystring);
+   }
+   public static void clearListStartPosition(){
+	   listStartPosition.clear();
+   }
+   
+   private static List<String> listStopPosition=new ArrayList<String>();
+   public static List<String> getListStopPosition() {
+	return listStopPosition;
+   }
+   public static void addListStopPosition(String mystring){
+	   listStopPosition.add(mystring);
+   }
+   public static void clearListStopPosition(){
+	   listStopPosition.clear();
+   }
+
    private static List<Integer> listI=new ArrayList<Integer>();
    public static List<Integer> getListI() {
 	return listI;

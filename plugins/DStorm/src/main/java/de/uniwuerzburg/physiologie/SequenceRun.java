@@ -24,7 +24,8 @@ public class SequenceRun implements Runnable {
 	String camera = null;
 	private SequenceSettings settings=app_.acquisitions().getAcquisitionSettings();
 	private int curFrame =0;
-	private boolean running;
+	private boolean running=false;
+	private PluginEngine pluginengine;
 	
 	public boolean isRunning() {
 		return running;
@@ -36,7 +37,9 @@ public class SequenceRun implements Runnable {
 
 	private PluginUtils pluginUtils;
 
-	public SequenceRun (AccessorySequenceSettings accSettings, FolderName folderName, PluginUtils pluginUtils){
+	public SequenceRun (AccessorySequenceSettings accSettings, FolderName folderName, PluginUtils pluginUtils ){
+		
+		
 		this.accSettings=accSettings;
 		this.folderName=folderName;
 		this.pluginUtils=pluginUtils;
@@ -221,6 +224,8 @@ public class SequenceRun implements Runnable {
 	
 	public void run() {
 			this.running=true;
+			pluginUtils.setRunning(running);
+			
 		try {
 
 			
@@ -277,6 +282,7 @@ public class SequenceRun implements Runnable {
 				core_.stopSequenceAcquisition();
 				Thread.sleep(100);
 				this.running=false;
+				pluginUtils.setRunning(running);
 //				store.close();
 //				store = null;
 				
@@ -294,14 +300,15 @@ public void sequenceStop(){
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
-	while(running());
+	running=false;
+	pluginUtils.setRunning(running);
+	while(isRunning());
 }
 public boolean frozen()	{
 	boolean frozen = store.getIsFrozen();
 	return frozen;
 }
 public boolean running(){
-	boolean running=false;
 	try {
 		running = core_.isSequenceRunning(camera);
 	} catch (Exception e) {
