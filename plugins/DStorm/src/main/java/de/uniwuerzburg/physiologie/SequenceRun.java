@@ -251,9 +251,9 @@ public class SequenceRun implements Runnable {
 			if (accSettings.recordingParadigm.equals("After")){	
 				core_.startSequenceAcquisition((int)accSettings.framesPScanBeads, 0, true);
 				}
-			if (accSettings.recordingParadigm.equals("Epi")){	
-				core_.startSequenceAcquisition(1, 0, true);
-				}
+//			if (accSettings.recordingParadigm.equals("Epi")){	
+//				core_.startSequenceAcquisition(1, 0, true);
+//				}
 			// Set up a Coords.CoordsBuilder for applying coordinates to each
 			// image.
 			CoordsBuilder builder = app_.data().getCoordsBuilder().z(0).channel(0).stagePosition(0);
@@ -292,6 +292,27 @@ public class SequenceRun implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	public void epi(){
+		
+		try {
+			core_.snapImage();
+			TaggedImage tmp = core_.getTaggedImage();
+			Image image1 = app_.data().convertTaggedImage(tmp);
+			image1 = image1.copyAtCoords(image1.getCoords().copy().channel(0).build());
+
+
+			store.putImage(image1);
+			store.freeze();
+		} catch (Exception e) {
+			System.out.println("error in Epi");
+			e.printStackTrace();
+		}
+		
+
+		
+		
+	}
+	
 public void sequenceStop(){
 	try {
 		core_.stopSequenceAcquisition();

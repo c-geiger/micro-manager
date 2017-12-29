@@ -119,6 +119,12 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 
 			String Shutter_Internal = arrayCamProps [32];
 			core_.setProperty(camera, Shutter_Internal, "Open");
+			
+			if (!camera.equals("Andor 8309 longwave")){
+				String FlipY = arrayCamProps [41];
+				core_.setProperty(camera, FlipY, "1");
+				
+			}
 			}
 			
 		} catch (Exception e) {

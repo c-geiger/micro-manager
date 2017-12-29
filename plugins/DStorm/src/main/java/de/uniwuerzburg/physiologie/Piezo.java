@@ -598,7 +598,7 @@ public int initializePiezoScan(String direction){
 	if (direction.equals("downwards")){startPos=lowerStart;}
 	if (direction.equals("calibration")){startPos=accSettings.startPositionCalibration;}
 	
-	gui.setLabScannumber(direction + ": " + scannumberindex);
+	//gui.setLabScannumber(direction + ": " + scannumberindex);
 	setWavegeneratorStartposition(startPos);
 	setZPosOnly(startPos);
 	waitForArriving();
@@ -687,7 +687,7 @@ public boolean initializePiezoVariables(){
 		System.out.println("upperstart position" + upperStart);
 		lowerStart = upperStart - scanDistance;
 		System.out.println("lowerstart position" + lowerStart);
-		recordedOCFraction=2;
+		recordedOCFraction=accSettings.recordedOCFraction;
 		
 		outputCycles = frames / segmentLength;
 		cycleDistance = scanDistance / outputCycles;

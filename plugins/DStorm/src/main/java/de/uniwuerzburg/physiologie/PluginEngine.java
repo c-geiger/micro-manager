@@ -93,6 +93,7 @@ public class PluginEngine {
 				piezo.setScannumberindex(scannumberindex);
 				//upscan
 				direction="upwards";
+				gui.setLabScannumber("Scan "+ scanCounter +" : "+ direction + " " + (scannumberindex+1));
 				MMStudio.addListD(direction);
 				MMStudio.addListRP(accSettings.recordingParadigm + "_" + scanCounter);
 				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
@@ -163,6 +164,7 @@ public class PluginEngine {
 				}
 				//downscan
 				direction="downwards";
+				gui.setLabScannumber("Scan "+ scanCounter +" : "+ direction + " " + (scannumberindex+1));
 				MMStudio.addListD(direction);
 				MMStudio.addListRP(accSettings.recordingParadigm + "_" + scanCounter);
 				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
@@ -251,6 +253,7 @@ public class PluginEngine {
 				System.out.println("writing positionarray failed");
 			}
 			gui.setLblScanRunning("finished");
+			gui.setLabScannumber("Scan " + scanCounter);
 			progressbar.setVisible(false);
 			System.out.println("successfull recording");
 			piezo.resetPiezo();
@@ -267,16 +270,9 @@ public class PluginEngine {
 	}	
 
 
-	
-	
-	
-	
-
-
-
 	public void runSequenceCalacquisition(){
 		calCounter++;
-		piezo.setScannumberindex(42);
+		piezo.setScannumberindex(1);
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
@@ -285,12 +281,14 @@ public class PluginEngine {
 
 		
 				direction="calibration";
+				gui.setLabScannumber("Calibration " + calCounter);
 				MMStudio.addListD(direction);
 				MMStudio.addListRP(accSettings.recordingParadigm + "_" + calCounter);
 				MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
 				
-				piezo.initializePiezoScan(direction);
+				outputCycleID = piezo.initializePiezoScan(direction);
 				MMStudio.addListStartPosition(String.valueOf(piezo.getAktPosZ()));
+				outputcycleIDOld = outputCycleID;
 				
 				new Thread(new Runnable() {
 					@Override
@@ -302,18 +300,18 @@ public class PluginEngine {
 				}).start();
 
 				piezo.writePosArrayFirstFrame(direction);
-				outputCycleID = piezo.getOutputCycleID();
 				
 				calibrationloop:  do {
 					//wait until imagerecording starts
-					do{
-					running=sequenceRun.isRunning();
-					}while(!running);
+//					do{
+//					running=sequenceRun.isRunning();
+//					}while(!running);
 					
 					if (accSettings.stopRecording) {
 						break calibrationloop;
 					}
 					outputCycleID = piezo.retrieveOutputcycleID();
+					System.out.println("current outputID "+ outputCycleID);
 					try {
 						Thread.sleep(50);
 					} catch (InterruptedException e) {
@@ -321,7 +319,8 @@ public class PluginEngine {
 						e.printStackTrace();
 					}
 					
-					if (!(outputcycleIDOld >= outputCycleID) && (outputCycleID % recordedOCFraction == 0)) {
+					if (outputcycleIDOld < outputCycleID && (outputCycleID % recordedOCFraction == 0)) {
+						System.out.println("printed follow "+ outputCycleID);
 					piezo.writePosArrayFrames(direction,outputCycleID);
 					}
 					outputcycleIDOld = outputCycleID;
@@ -348,6 +347,7 @@ public class PluginEngine {
 			}
 			System.out.println("successfull recording");
 			gui.setLblScanRunning("finished");
+			gui.setLabScannumber("Calibration " + calCounter);
 			piezo.resetPiezo();
 			
 			try {
@@ -364,6 +364,7 @@ public class PluginEngine {
 	public void runSequenceBeadsBeforeacquisition(){
 		beforeCounter++;
 		direction="none";
+		gui.setLabScannumber("Beads-Before " + beforeCounter);
 		MMStudio.addListD(direction);
 		MMStudio.addListRP(accSettings.recordingParadigm+ "_" + beforeCounter);
 		MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
@@ -391,6 +392,7 @@ public class PluginEngine {
 	public void runSequenceBeadsAfteracquisition(){
 		afterCounter++;
 		direction="none";
+		gui.setLabScannumber("Beads-After " + afterCounter);
 		MMStudio.addListD(direction);
 		MMStudio.addListRP(accSettings.recordingParadigm + "_" + afterCounter);
 		MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
@@ -415,14 +417,29 @@ public class PluginEngine {
 		gui.getBtnStartLive().setEnabled(true);
 	};
 	public void runSequenceEpiacquisition(){
+		epiCounter++;
+		direction="none";
+		gui.setLblScanRunning("running");
+		gui.setLabScannumber("Epi " + epiCounter);
+		MMStudio.addListD(direction);
+		MMStudio.addListRP(accSettings.recordingParadigm + "_" + epiCounter);
+		MMStudio.addListStartTime(new SimpleDateFormat("ddMMyyyy:HH.mm.ss").format(Calendar.getInstance().getTime()));
+		MMStudio.addListStartPosition(String.valueOf(piezo.retrieveZPos()));
+		
 		sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
-		sequenceRun.run();
+		sequenceRun.epi();
+		
+		MMStudio.addListStopTime("none");
+		MMStudio.addListStopPosition("none");
 		try {
 			accSettings.save(accSettings.metadataPath);
 		} catch (IOException e) {
 			pluginUtils.errorDialog("could not write metadata");
 			e.printStackTrace();
 		}
+		gui.setLblScanRunning("finished");
+		gui.getBtnStartLive().setEnabled(true);
+		
 	};	
 	
 //	public void runDstormAcquisition() {
@@ -923,6 +940,9 @@ public class PluginEngine {
 		}
 		if (accSettings.recordingParadigm.equals("Cal")){
 			numFrames= (int)accSettings.framesPScanCal;
+		}
+		if (accSettings.recordingParadigm.equals("Epi")){
+			numFrames= 1;
 		}
 		int roiX = accSettings.imageSizeS;
 		int roiY= accSettings.imageSizeS;

@@ -288,12 +288,12 @@ private Component verticalStrut_23;
 private JLabel lblScanRunning;
 public void setLblScanRunning(String scanRunning) {
 	if (scanRunning.equals("running")){
-	lblScanRunning.setText("Scan running :");
+	lblScanRunning.setText("Recording running :");
 	lblScanRunning.setForeground(Color.RED);
 	labScannumber.setForeground(Color.RED);
 	}
 	if (scanRunning.equals("finished")){
-	lblScanRunning.setText("recording completed!");
+	lblScanRunning.setText("Recording completed!");
 	lblScanRunning.setForeground(Color.BLACK);
 	labScannumber.setForeground(Color.BLACK);
 	}
@@ -2535,7 +2535,7 @@ public void setscanblack(){
 		accSettings.framesPScanS=Double.parseDouble(tfFramesPScanS.getText());
 		accSettings.scanSpeedS=Double.parseDouble(tfScanspeedS.getText());
 		accSettings.emGainS= Integer.parseInt(tfEmGainS.getText());
-		accSettings.scanDepthS=Integer.parseInt(tfScanDepthS.getText());
+		accSettings.scanDepthS=Double.parseDouble(tfScanDepthS.getText());
 		accSettings.noScansS=  Integer.parseInt(tfNoScansS.getText());
 		accSettings.framesPMicroS=  Double.parseDouble(tfFramesPMicroS.getText());
 		accSettings.expBeads=  Double.parseDouble(tfExpBeads.getText());
@@ -2546,18 +2546,18 @@ public void setscanblack(){
 		accSettings.expCal=  Double.parseDouble(tfExpCal.getText());
 		accSettings.framesPScanCal= Integer.parseInt (tfFramesPScanCal.getText());
 		accSettings.scanSpeedCal=  Double.parseDouble(tfScanspeedCal.getText());
-		accSettings.scanDepthCal= Integer.parseInt (tfScanDepthCal.getText());
+		accSettings.scanDepthCal= Double.parseDouble (tfScanDepthCal.getText());
 		accSettings.emGainCal=  Integer.parseInt(tfEmGainCal.getText());
-		accSettings.startPositionScan=  Double.parseDouble(valStartPosS.getText());
-		accSettings.endPositionScan=  Double.parseDouble(valEndPosS.getText());
-		accSettings.positionBeadsBefore=  Double.parseDouble(valStartPosBefore.getText());
-		accSettings.positionBeadsAfter= Double.parseDouble (valStartAfter.getText());
-		accSettings.positionEpi=  Double.parseDouble(valRecordingPositionEpi.getText());
-		accSettings.startPositionCalibration=  Double.parseDouble(valStartPosCal.getText());
-		accSettings.endPositionCalibration=  Double.parseDouble(valEndPosCal.getText());
+//		accSettings.startPositionScan=  Double.parseDouble(valStartPosS.getText());
+//		accSettings.endPositionScan=  Double.parseDouble(valEndPosS.getText());
+//		accSettings.positionBeadsBefore=  Double.parseDouble(valStartPosBefore.getText());
+//		accSettings.positionBeadsAfter= Double.parseDouble (valStartAfter.getText());
+//		accSettings.positionEpi=  Double.parseDouble(valRecordingPositionEpi.getText());
+//		accSettings.startPositionCalibration=  Double.parseDouble(valStartPosCal.getText());
+//		accSettings.endPositionCalibration=  Double.parseDouble(valEndPosCal.getText());
 		accSettings.framesPmicroCal=  Double.parseDouble(tfFramesPMicroCal.getText());
-		accSettings.distTocoverslipS =Integer.parseInt(tfStartDistS.getText());
-		accSettings.distanceToCoverslipEpi=Integer.parseInt(tfDistToCovEpi.getText());
+		accSettings.distTocoverslipS =Double.parseDouble(tfStartDistS.getText());
+		accSettings.distanceToCoverslipEpi=Double.parseDouble(tfDistToCovEpi.getText());
 	
 	}
 	
