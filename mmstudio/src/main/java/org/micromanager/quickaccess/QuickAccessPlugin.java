@@ -22,11 +22,14 @@ package org.micromanager.quickaccess;
 import java.awt.Dimension;
 import javax.swing.ImageIcon;
 import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
+import org.scijava.plugin.Plugin;
 
 /**
  * QuickAccessPlugins are used for controls that can show up in the Quick-
  * Access Window, which shows frequently-used controls.
  */
+@Plugin(type = MenuPlugin.class)
 public abstract class QuickAccessPlugin implements MMPlugin {
    /**
     * The width of a single cell in the Quick-Access Window.

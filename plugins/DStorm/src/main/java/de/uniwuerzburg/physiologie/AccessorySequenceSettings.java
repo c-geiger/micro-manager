@@ -249,6 +249,8 @@ public class AccessorySequenceSettings {
 
 
 	public String filenamearrayPath;
+	
+	public int recordedOCFraction = 5;
 
 
 	
@@ -355,7 +357,7 @@ public class AccessorySequenceSettings {
 		result.channel1AssPath=channel1AssPath;
 		result.calOnly=calOnly;
 		result.filenamearrayPath=filenamearrayPath;
-
+		result.recordedOCFraction=recordedOCFraction;
 
 		
 		return result;

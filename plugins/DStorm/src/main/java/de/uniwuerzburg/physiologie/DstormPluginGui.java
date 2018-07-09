@@ -51,7 +51,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.Action;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import com.jgoodies.forms.factories.DefaultComponentFactory;
+//import com.jgoodies.forms.factories.DefaultComponentFactory;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
@@ -1815,7 +1815,7 @@ public void setLabScannumber(String scanNo) {
 		    }
 		});
 		
-		valStartPosBefore = new JLabel(beadsPosString);
+		valStartPosBefore = new JLabel("empty");
 		panBeadsSet.add(valStartPosBefore);
 		
 		JButton buttonStartPosAfter = new JButton("go to start position after ");
@@ -1837,7 +1837,7 @@ public void setLabScannumber(String scanNo) {
 		    }
 		});
 		
-		valStartAfter = new JLabel(beadsPosString);
+		valStartAfter = new JLabel("empty");
 		panBeadsSet.add(valStartAfter);
 		
 		lblBeads = new JLabel("BeadsCamera");

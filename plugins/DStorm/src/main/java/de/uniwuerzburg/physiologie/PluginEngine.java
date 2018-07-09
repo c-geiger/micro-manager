@@ -49,7 +49,7 @@ public class PluginEngine {
 	private JProgressBar progressbar;
 	private StorageMultipageTiff multitiff;
 	private int outputcycleIDOld;
-	private int recordedOCFraction=5;
+	private int recordedOCFraction;
 	private boolean running;
 	private int scanCounter=0;
 	private int epiCounter=0;
@@ -69,12 +69,16 @@ public class PluginEngine {
 		core=app_.getCMMCore();
 		this.gui=gui;
 		this.progressbar=gui.getProgressBar();
+		accSettings.recordedOCFraction=5;
+		this.recordedOCFraction=accSettings.recordedOCFraction;
 	}
 
 
 
 	public void runSequenceScanacquisition(){
 		scanCounter++;
+		accSettings.recordedOCFraction=5;
+		this.recordedOCFraction=accSettings.recordedOCFraction;
 		int progress=1;
 		scanNumber=accSettings.noScansS;
 		piezo.InitializePiezoDevice();
@@ -272,7 +276,9 @@ public class PluginEngine {
 
 	public void runSequenceCalacquisition(){
 		calCounter++;
-		piezo.setScannumberindex(1);
+		accSettings.recordedOCFraction=2;
+		this.recordedOCFraction=accSettings.recordedOCFraction;
+		piezo.setScannumberindex(0);
 		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
@@ -1021,7 +1027,8 @@ public class PluginEngine {
 			core.stopSequenceAcquisition();
 			//this.sequenceRun.sequenceStop();
 			piezo.stopPiezo();
-
+			gui.setLabScannumber("Scan stopped by user");
+			gui.setLblScanRunning("finished");
 			System.out.println("Sequencestopped by user");
 			accSettings.stopRecording=false;
 		} catch (Exception e) {

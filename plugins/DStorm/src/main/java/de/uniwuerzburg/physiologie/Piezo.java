@@ -704,7 +704,7 @@ public boolean initializePiezoVariables(){
 		System.out.println("upperstart position" + upperStart);
 		lowerStart = upperStart - scanDistance;
 		System.out.println("lowerstart position" + lowerStart);
-		recordedOCFraction=1;
+		recordedOCFraction=accSettings.recordedOCFraction;
 		
 		outputCycles = frames / segmentLength;
 		cycleDistance = scanDistance / outputCycles;
