@@ -135,7 +135,7 @@ public class DstormPlugin implements MenuPlugin, SciJavaPlugin {
 		
 		
 		
-		DstormPluginGui frame = new DstormPluginGui(app_, "COM8");
+		DstormPluginGui frame = new DstormPluginGui(app_, "COM7");
 		
 		
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

@@ -81,7 +81,7 @@ public class PluginEngine {
 		this.recordedOCFraction=accSettings.recordedOCFraction;
 		int progress=1;
 		scanNumber=accSettings.noScansS;
-		piezo.InitializePiezoDevice();
+//		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
 		int scannumberindex = 0;
@@ -112,7 +112,7 @@ public class PluginEngine {
 					public void run() {
 						sequenceRun=new SequenceRun(accSettings, folderName, pluginUtils);
 						piezo.setSequenceRun(sequenceRun);
-						setSequenceRun(sequenceRun);
+//						setSequenceRun(sequenceRun);
 						sequenceRun.run();
 					}
 				}).start();
@@ -131,17 +131,17 @@ public class PluginEngine {
 						break scanloop;
 					}
 					outputCycleID = piezo.retrieveOutputcycleID();
-					System.out.println("current outputID "+ outputCycleID);
+//					System.out.println("current outputID "+ outputCycleID);
 					try {
-						Thread.sleep(50);
+						Thread.sleep(100);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					
 					if (outputcycleIDOld < outputCycleID && (outputCycleID % recordedOCFraction == 0)) {
-						System.out.println("printed follow "+ outputCycleID);
-					piezo.writePosArrayFrames(direction,outputCycleID);
+//						System.out.println("printed follow "+ outputCycleID);
+						piezo.writePosArrayFrames(direction,outputCycleID);
 					}
 					outputcycleIDOld = outputCycleID;
 					
@@ -201,17 +201,17 @@ public class PluginEngine {
 						break scanloop;
 					}
 					outputCycleID = piezo.retrieveOutputcycleID();
-					System.out.println("current outputID "+ outputCycleID);
+//					System.out.println("current outputID "+ outputCycleID);
 					try {
-						Thread.sleep(50);
+						Thread.sleep(100);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					
 					if (outputcycleIDOld < outputCycleID && (outputCycleID % recordedOCFraction == 0)) {
-						System.out.println("printed follow "+ outputCycleID);
-					piezo.writePosArrayFrames(direction,outputCycleID);
+//						System.out.println("printed follow "+ outputCycleID);
+						piezo.writePosArrayFrames(direction,outputCycleID);
 					}
 					outputcycleIDOld = outputCycleID;
 					
@@ -279,7 +279,7 @@ public class PluginEngine {
 		accSettings.recordedOCFraction=2;
 		this.recordedOCFraction=accSettings.recordedOCFraction;
 		piezo.setScannumberindex(0);
-		piezo.InitializePiezoDevice();
+//		piezo.InitializePiezoDevice();
 		piezo.initializePiezoVariables();
 		piezo.initializePiezoRun();
 		 
